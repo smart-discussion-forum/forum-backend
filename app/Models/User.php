@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\RoleEnum;
+use App\Enums\StatusEnum;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -9,10 +11,32 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    protected $fillable = ['name', 'email', 'password'];
+    protected $fillable = ['name', 'email', 'password','role', 'status','last_active'];
 
     protected $hidden = ['password', 'remember_token'];
 
+    protected function casts(): array
+    {
+        return [
+            'role' => RoleEnum::class,
+            'status' => StatusEnum::class,
+            'last_active' => 'datetime',
+        ];
+    }
+
+    public function groups(){
+        return $this->belongsToMany(Group::class, 'group_members')
+        ->withPivot('role', 'joined_at');
+
+    }
+
+    public function createdGroups()
+    {
+        return $this->hasMany(Group::class, 'created_by');
+    }
+
+    /* TODO: Post and topic models/migrations don't exist yet(deleted on development, june 30)
+    The relationships will throw a "Class not found" error when called before they are created.*/
     public function posts()
     {
         return $this->hasMany(Post::class);
