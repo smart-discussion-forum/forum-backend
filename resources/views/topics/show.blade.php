@@ -12,7 +12,7 @@
         @csrf
         <textarea name="content" placeholder="Type response..."></textarea>
         <div style="text-align:right; margin-top:10px;">
-            <button type="submit">Send</button>
+            <button type="submit" class="btn">Send</button>
         </div>
     </form>
 @endsection
