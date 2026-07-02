@@ -16,11 +16,19 @@ class QuizController extends Controller
 
     public function create()
     {
+        if (auth()->user()->role !== 'teacher') {
+            abort(403);
+        }
+
         return view('quizzes.create');
     }
 
     public function store(Request $request)
     {
+        if (auth()->user()->role !== 'teacher') {
+            abort(403);
+        }
+
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'start_time' => 'required|date',
@@ -51,6 +59,21 @@ class QuizController extends Controller
         ]);
 
         return redirect('/quizzes')->with('success', 'Quiz created.');
+    }
+
+    public function announce($id)
+    {
+        if (auth()->user()->role !== 'teacher') {
+            abort(403);
+        }
+
+        $quiz = Quiz::findOrFail($id);
+        $quiz->update([
+            'announced_at' => now(),
+            'status' => 'announced',
+        ]);
+
+        return back()->with('success', 'Quiz announcement sent.');
     }
 
     public function show($id)

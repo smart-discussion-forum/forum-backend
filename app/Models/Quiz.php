@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Quiz extends Model
 {
-    protected $fillable = ['lecturer_id', 'title', 'questions', 'start_time', 'duration_minutes', 'target_category', 'status'];
+    protected $fillable = ['lecturer_id', 'title', 'questions', 'start_time', 'duration_minutes', 'target_category', 'status', 'announced_at'];
 
     protected $casts = [
         'questions' => 'array',
         'start_time' => 'datetime',
+        'announced_at' => 'datetime',
     ];
 
     public function submissions()
