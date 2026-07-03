@@ -427,7 +427,7 @@
                 <a href="/profile">Profile</a>
             </div>
             <div style="color:white; display:flex; align-items:center; gap:15px;">
-                <span>{{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})</span>
+                <span>{{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role->value) }})</span>
                 <form method="POST" action="/logout" style="display:inline;">
                     @csrf
                     <button type="submit" class="nav-logout">Logout</button>
