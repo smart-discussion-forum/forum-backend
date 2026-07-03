@@ -21,10 +21,10 @@
                 @error('email') <div class="error">{{ $message }}</div> @enderror
 
                 <label>Role:</label>
-                <input type="text" value="{{ ucfirst($user->role) }}" readonly>
+                <input type="text" value="{{ ucfirst($user->role->value) }}" readonly>
 
                 <label>Status:</label>
-                <input type="text" value="{{ ucfirst($user->status) }}" readonly>
+                <input type="text" value="{{ ucfirst($user->status->value) }}" readonly>
 
                 <div style="text-align:right; margin-top:10px;">
                     <button type="submit" class="btn">Update Profile</button>
