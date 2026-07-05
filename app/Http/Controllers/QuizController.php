@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoleEnum;
 use App\Models\Quiz;
 use App\Models\Submission;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class QuizController extends Controller
 
     public function create()
     {
-        if (auth()->user()->role !== 'teacher') {
+        if (auth()->user()->role !== RoleEnum::Lecturer) {
             abort(403);
         }
 
@@ -25,7 +26,7 @@ class QuizController extends Controller
 
     public function store(Request $request)
     {
-        if (auth()->user()->role !== 'teacher') {
+        if (auth()->user()->role !== RoleEnum::Lecturer) {
             abort(403);
         }
 
@@ -63,7 +64,7 @@ class QuizController extends Controller
 
     public function announce($id)
     {
-        if (auth()->user()->role !== 'teacher') {
+        if (auth()->user()->role !== RoleEnum::Lecturer) {
             abort(403);
         }
 

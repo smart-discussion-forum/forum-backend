@@ -20,7 +20,8 @@
             <label>I am a:</label>
             <select name="role">
                 <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
+                <option value="teacher">Lecturer</option>
+                <option value="admin">Admin</option>
             </select>
 
             <label><input type="checkbox" name="accepted_terms" value="1" style="width:auto;"> Accept Rules</label>
