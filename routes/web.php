@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\QuizController;
 use Illuminate\Support\Facades\Route;
@@ -41,4 +42,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/quizzes/{id}/submit', [QuizController::class, 'submit']);
     Route::post('/quizzes/{id}/announce', [QuizController::class, 'announce']);
     Route::get('/quizzes/results/{submissionId}', [QuizController::class, 'results']);
+
+    // Study Groups (RBAC)
+    Route::get('/groups', [GroupController::class, 'index']);
+    Route::get('/groups/{id}', [GroupController::class, 'show']);
+    Route::post('/groups/{id}/leave', [GroupController::class, 'leave']);
+
+    Route::middleware('lecturer')->post('/groups', [GroupController::class, 'store']);
+    Route::middleware('student')->post('/groups/{id}/join', [GroupController::class, 'join']);
 });
