@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('groups', function (Blueprint $table) {
             $table->id();
-            $table->string('name',100);
+            $table->string('name', 100);
             $table->text('description')->nullable();
-            $table->foreignID('created_by')->constrained('users');
+            $table->foreignId('created_by')->constrained('users'); // FIXED: was foreignID (invalid method)
             $table->timestamps();
         });
     }
