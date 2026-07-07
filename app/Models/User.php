@@ -35,8 +35,6 @@ class User extends Authenticatable
         return $this->hasMany(Group::class, 'created_by');
     }
 
-    /* TODO: Post and topic models/migrations don't exist yet(deleted on development, june 30)
-    The relationships will throw a "Class not found" error when called before they are created.*/
     public function posts()
     {
         return $this->hasMany(Post::class);
@@ -46,4 +44,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Topic::class);
     }
+    public function sentMessages()
+{
+    return $this->hasMany(Message::class,'sender_id');
+}
 }
