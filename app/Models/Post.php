@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-    protected $fillable = ['user_id', 'topic_id', 'content'];
+    protected $fillable = ['topic_id','user_id', 'content'];
 
     public function user()
     {
@@ -17,4 +17,6 @@ class Post extends Model
     {
         return $this->belongsTo(Topic::class);
     }
+
+    
 }

@@ -1,21 +1,30 @@
 @extends('layouts.app')
 @section('content')
-    <div style="float:right; background:white; padding:4px 10px; border:1px solid #999;" id="timer">--:--</div>
-    <div class="screen-title">Quiz taking screen</div>
-    <form method="POST" action="/quizzes/{{ $quiz->id }}/submit" id="quizForm">
-        @csrf
-        @foreach($quiz->questions as $i => $q)
-            <p><strong>{{ $q['question'] }}</strong></p>
-            @foreach($q['options'] as $j => $option)
-                <label style="display:block;">
-                    <input type="radio" name="answers[{{ $i }}]" value="{{ $j }}" style="width:auto;"> {{ $option }}
-                </label>
-            @endforeach
-        @endforeach
-        <div style="text-align:right; margin-top:10px;">
-            <button type="submit" class="btn">Submit</button>
+    <div class="auth-card" style="max-width:900px; margin:24px auto; padding:28px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
+            <div>
+                <div class="screen-title" style="color:var(--text); margin:0; text-align:left;">Quiz</div>
+                <div style="color:var(--muted); font-size:13px;">{{ $quiz->title }}</div>
+            </div>
+            <div style="background:rgba(79,124,168,0.12); padding:8px 14px; border-radius:999px; font-weight:700; color:#20324a;" id="timer">--:--</div>
         </div>
-    </form>
+        <form method="POST" action="/quizzes/{{ $quiz->id }}/submit" id="quizForm">
+            @csrf
+            @foreach($quiz->questions as $i => $q)
+                <div class="panel" style="margin-bottom:16px;">
+                    <p style="margin-top:0;"><strong>{{ $q['question'] }}</strong></p>
+                    @foreach($q['options'] as $j => $option)
+                        <label style="display:block; margin-bottom:8px;">
+                            <input type="radio" name="answers[{{ $i }}]" value="{{ $j }}" style="width:auto;"> {{ $option }}
+                        </label>
+                    @endforeach
+                </div>
+            @endforeach
+            <div style="text-align:right; margin-top:10px;">
+                <button type="submit" class="btn">Submit</button>
+            </div>
+        </form>
+    </div>
     <script>
         const endTime = new Date("{{ $quiz->end_time->toIso8601String() }}").getTime();
         const timerEl = document.getElementById('timer');

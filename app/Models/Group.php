@@ -18,6 +18,10 @@ class Group extends Model
         return $this->belongsToMany(User::class, 'group_members')
         ->withPivot('role', 'joined_at');
     }
+    public function messages()
+{
+    return $this->hasMany(Message::class);
+}
     /*TODO: Topic model/migration doesn't exist yet (deleted on development, Jun 30).*/
     public function topics()
     {

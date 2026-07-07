@@ -11,11 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('groups', function (Blueprint $table) {
+        Schema::create('message_exclusions', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
-            $table->text('description')->nullable();
-            $table->foreignId('created_by')->constrained('users'); // FIXED: was foreignID (invalid method)
+            $table->foreignId('message_id')
+                  ->constrained('messages')
+                  ->cascadeOnDelete();
+
+            $table->foreignId('excluded_user_id')
+                  ->constrained('users')
+                  ->cascadeOnDelete();
+
             $table->timestamps();
         });
     }
@@ -25,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('groups');
+        Schema::dropIfExists('message_exclusions');
     }
 };
