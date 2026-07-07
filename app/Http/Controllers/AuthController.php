@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoleEnum;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -49,16 +50,22 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users',
                 'password' => 'required|min:6',
-                'role' => 'required|in:student,teacher',
+                'role' => 'required|in:student,teacher,admin',
                 'accepted_terms' => 'required',
             ]);
+
+            $role = match ($data['role']) {
+                'student' => RoleEnum::Student,
+                'teacher' => RoleEnum::Lecturer,
+                'admin' => RoleEnum::Admin,
+            };
 
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => bcrypt($data['password']),
-                'role' => $data['role'],
-                'status' => 'active',
+                'role' => $role,
+                'status' => 'Active',
                 'last_active' => now(),
             ]);
 
