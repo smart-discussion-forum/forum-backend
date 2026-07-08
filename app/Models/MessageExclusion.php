@@ -6,12 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class MessageExclusion extends Model
 {
-   public function group()
-{
-     $fillable = ['message_id', 'excluded_user_id'];        
-}
+    protected $fillable = ['message_id', 'excluded_user_id'];
 
- public function message()
+    public function message()
     {
         return $this->belongsTo(Message::class);
     }
@@ -20,5 +17,4 @@ class MessageExclusion extends Model
     {
         return $this->belongsTo(User::class, 'excluded_user_id');
     }
-
 }
