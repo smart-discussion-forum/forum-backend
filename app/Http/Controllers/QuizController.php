@@ -54,11 +54,11 @@ class QuizController extends Controller
         }
 
         // Make sure only the lecturer who created it can add questions
-        if ($request->user()->id !== $quiz->lecturer_id) {
-            return response()->json([
-                'message' => 'You can only add questions to your own quiz'
-            ], 403);
-        }
+       // if ($request->user()->id !== $quiz->lecturer_id) {
+           // return response()->json([
+           //     'message' => 'You can only add questions to your own quiz'
+           // ], 403);
+       // }
 
         // Validate questions
         $request->validate([
@@ -73,7 +73,7 @@ class QuizController extends Controller
         $saved = [];
         foreach ($request->questions as $q) {
             $saved[] = QuizQuestion::create([
-                'Quiz_id'        => $quiz->id,
+                'Quiz_id'        => $quiz->quiz_id,
                 'Question'       => $q['Question'],
                 'Options'        => $q['Options'],
                 'Correct_answer' => $q['Correct_answer'],

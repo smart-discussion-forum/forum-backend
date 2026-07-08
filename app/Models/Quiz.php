@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Quiz extends Model
 {
     public $timestamps = false;
+    protected $primaryKey = 'quiz_id';
      protected $fillable = [
         'lecturer_id',
-        'title',
-        'target_category',
+        'Title',
+        'Target_category',
         'Publish_time',
         'Duration'
     ];
@@ -26,12 +27,12 @@ class Quiz extends Model
     // A quiz has many questions
     public function questions()
     {
-        return $this->hasMany(QuizQuestion::class, 'Quiz_id');
+        return $this->hasMany(QuizQuestion::class, 'quiz_id');
     }
 
     // A quiz has many attempts
     public function attempts()
     {
-        return $this->hasMany(QuizAttempt::class, 'Quiz_id');
+        return $this->hasMany(QuizAttempt::class, 'quiz_id');
     }
 }
