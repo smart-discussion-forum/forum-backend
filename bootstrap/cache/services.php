@@ -28,20 +28,12 @@
     24 => 'Laravel\\Reverb\\ApplicationManagerServiceProvider',
     25 => 'Laravel\\Reverb\\ReverbServiceProvider',
     26 => 'Laravel\\Sail\\SailServiceProvider',
-<<<<<<< Updated upstream
-    27 => 'Laravel\\Tinker\\TinkerServiceProvider',
-    28 => 'Carbon\\Laravel\\ServiceProvider',
-    29 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    30 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    31 => 'App\\Providers\\AppServiceProvider',
-=======
     27 => 'Laravel\\Sanctum\\SanctumServiceProvider',
     28 => 'Laravel\\Tinker\\TinkerServiceProvider',
     29 => 'Carbon\\Laravel\\ServiceProvider',
     30 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
     31 => 'Termwind\\Laravel\\TermwindServiceProvider',
     32 => 'App\\Providers\\AppServiceProvider',
->>>>>>> Stashed changes
   ),
   'eager' => 
   array (
@@ -57,18 +49,11 @@
     9 => 'Illuminate\\View\\ViewServiceProvider',
     10 => 'Laravel\\Pail\\PailServiceProvider',
     11 => 'Laravel\\Reverb\\ReverbServiceProvider',
-<<<<<<< Updated upstream
-    12 => 'Carbon\\Laravel\\ServiceProvider',
-    13 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    14 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    15 => 'App\\Providers\\AppServiceProvider',
-=======
     12 => 'Laravel\\Sanctum\\SanctumServiceProvider',
     13 => 'Carbon\\Laravel\\ServiceProvider',
     14 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
     15 => 'Termwind\\Laravel\\TermwindServiceProvider',
     16 => 'App\\Providers\\AppServiceProvider',
->>>>>>> Stashed changes
   ),
   'deferred' => 
   array (
