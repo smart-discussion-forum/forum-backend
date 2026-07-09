@@ -10,22 +10,22 @@ class Group extends Model
 
     public function creator()
     {
-        return $this->belongsToMany(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function members()
     {
         return $this->belongsToMany(User::class, 'group_members')
-        ->withPivot('role', 'joined_at');
+            ->withPivot('role', 'joined_at');
     }
+
     public function messages()
-{
-    return $this->hasMany(Message::class);
-}
-    /*TODO: Topic model/migration doesn't exist yet (deleted on development, Jun 30).*/
+    {
+        return $this->hasMany(Message::class);
+    }
+
     public function topics()
     {
         return $this->hasMany(Topic::class);
     }
 }
-

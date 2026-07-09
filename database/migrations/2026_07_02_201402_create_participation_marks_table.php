@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('paticipation_marks', function (Blueprint $table) {
+        Schema::create('participation_marks', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('user_id')
@@ -32,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('paticipation_marks');
+        Schema::dropIfExists('participation_marks');
     }
 };
