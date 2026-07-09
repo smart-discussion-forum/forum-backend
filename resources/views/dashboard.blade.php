@@ -8,6 +8,7 @@
             <a href="/discussions" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Discussions</a>
             <a href="/quizzes" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Quizzes</a>
             <a href="/profile" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Profile</a>
+            <a href="/chat" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Group Chat</a>
         </div>
     </div>
 @endsection

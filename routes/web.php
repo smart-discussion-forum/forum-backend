@@ -4,12 +4,13 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\QuizController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ChatController;
 
 // Public
 Route::get('/', fn() => view('welcome'));
 Route::get('/rules', fn() => view('rules'));
 
-Route::get('/register', fn() => view('auth.register'));
+Route::get('/register', [AuthController::class, 'showRegister']);
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/login', fn() => view('auth.login'))->name('login');
@@ -22,6 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/profile/password', [AuthController::class, 'updatePassword']);
+    Route::get('/chat',[ChatController::class,'index'])->name ('chat');
 
     // Discussion Forum
     Route::get('/topics', [TopicController::class, 'index']);
