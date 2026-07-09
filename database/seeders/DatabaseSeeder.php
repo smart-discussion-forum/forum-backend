@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
     {
        
         $this->call([
-<<<<<<< Updated upstream
+
            UserSeeder::class,
            GroupSeeder::class,
            GroupMemberSeeder::class,
@@ -26,11 +26,8 @@ class DatabaseSeeder extends Seeder
             MessageExclusionSeeder::class,
             ParticipationMarksSeeder::class,
             
-=======
-            UserSeeder::class,
-            GroupSeeder::class,
-            GroupMemberSeeder::class,
->>>>>>> Stashed changes
+
+       
         ]);
     }
 }
