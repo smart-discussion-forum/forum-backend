@@ -25,6 +25,34 @@ class TopicController extends Controller
 
         return view('topics.index', compact('topicSummaries'));
     }
+    public function search(Request $request)
+{
+    $query = Topic::with('creator')->withCount('posts');
+
+    if ($request->filled('keyword')) {
+        $query->where('title', 'like', '%' . $request->keyword . '%');
+    }
+
+    if ($request->filled('category')) {
+        $query->where('category', $request->category);
+    }
+
+    $topics = $query->latest()->get();
+
+    $topicSummaries = $topics->map(function ($topic) {
+        return [
+            'topic' => $topic,
+            'latest_post' => $topic->posts()->with('user')->latest()->first(),
+            'post_count' => $topic->posts_count,
+        ];
+    });
+
+    return view('topics.index', [
+        'topicSummaries' => $topicSummaries,
+        'keyword' => $request->keyword,
+        'category' => $request->category,
+    ]);
+}
 
     public function discussions()
     {
