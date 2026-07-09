@@ -22,7 +22,7 @@
                     <tr>
                         <td>{{ $summary['topic']->title }}</td>
                         <td>{{ $summary['topic']->category ?? 'General' }}</td>
-                        <td>{{ $summary['topic']->user?->name ?? 'Unknown author' }}</td>
+                        <td>{{ $summary['topic']->creator?->name ?? 'Unknown author' }}</td>
                         <td>{{ $summary['post_count'] }}</td>
                         <td>
                             @if($summary['latest_post'])

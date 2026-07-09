@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Topic;
 use App\Models\Post;
-use App\Models\PostReaction;
 use Illuminate\Http\Request;
 
 class TopicController extends Controller
 {
     public function index()
     {
-        $topics = Topic::with('user')
+        $topics = Topic::with('creator')
             ->withCount('posts')
             ->latest()
             ->get();
@@ -29,12 +28,10 @@ class TopicController extends Controller
 
     public function discussions()
     {
-        $topics = Topic::with('user')->latest()->get();
+        $topics = Topic::with('creator')->latest()->get();
         $activeTopic = $topics->first();
-        $posts = $activeTopic ? $activeTopic->posts()->with('user')->withCount('reactions')->latest()->get() : collect();
-        $reactedPostIds = $posts->isNotEmpty()
-            ? PostReaction::where('user_id', auth()->id())->whereIn('post_id', $posts->pluck('id'))->pluck('post_id')->all()
-            : [];
+        $posts = $activeTopic ? $activeTopic->posts()->with('user')->latest()->get() : collect();
+        $reactedPostIds = []; // reactions not available yet (no post_reactions table)
 
         return view('discussions.index', compact('topics', 'activeTopic', 'posts', 'reactedPostIds'));
     }
@@ -49,10 +46,12 @@ class TopicController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'nullable|string|max:100',
+            'group_id' => 'required|exists:groups,id',
         ]);
 
         $topic = Topic::create([
-            'user_id' => auth()->id(),
+            'group_id' => $data['group_id'],
+            'created_by' => auth()->id(),
             'title' => $data['title'],
             'category' => $data['category'] ?? null,
         ]);
@@ -62,12 +61,10 @@ class TopicController extends Controller
 
     public function show($id)
     {
-        $topic = Topic::with('user')->findOrFail($id);
-        $posts = $topic->posts()->with('user')->withCount('reactions')->latest()->get();
-        $reactedPostIds = $posts->isNotEmpty()
-            ? PostReaction::where('user_id', auth()->id())->whereIn('post_id', $posts->pluck('id'))->pluck('post_id')->all()
-            : [];
-        $topics = Topic::with('user')->latest()->get();
+        $topic = Topic::with('creator')->findOrFail($id);
+        $posts = $topic->posts()->with('user')->latest()->get();
+        $reactedPostIds = []; // reactions not available yet (no post_reactions table)
+        $topics = Topic::with('creator')->latest()->get();
 
         return view('discussions.index', compact('topic', 'topics', 'posts', 'reactedPostIds'));
     }
@@ -85,26 +82,5 @@ class TopicController extends Controller
         ]);
 
         return redirect('/discussions/' . $topicId);
-    }
-
-    public function toggleReaction(Request $request, $topicId, $postId)
-    {
-        $post = Post::where('topic_id', $topicId)->findOrFail($postId);
-
-        $existingReaction = PostReaction::where('user_id', auth()->id())
-            ->where('post_id', $post->id)
-            ->first();
-
-        if ($existingReaction) {
-            $existingReaction->delete();
-        } else {
-            PostReaction::create([
-                'user_id' => auth()->id(),
-                'post_id' => $post->id,
-                'reaction_type' => 'like',
-            ]);
-        }
-
-        return back();
     }
 }

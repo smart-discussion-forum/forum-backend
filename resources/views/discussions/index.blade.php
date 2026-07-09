@@ -21,7 +21,7 @@
                         <a href="/discussions/{{ $topicItem->id }}" class="topic-card {{ $selectedTopic && $selectedTopic->id === $topicItem->id ? 'active' : '' }}">
                             <div class="topic-card-title">{{ $topicItem->title }}</div>
                             <div class="topic-card-meta">
-                                {{ $topicItem->user?->name ?? 'Unknown author' }}
+                                {{ $topicItem->creator?->name ?? 'Unknown author' }}
                                 @if($topicItem->category)
                                     <span class="topic-dot">•</span>{{ $topicItem->category }}
                                 @endif
@@ -39,7 +39,7 @@
                         <div>
                             <div class="conversation-title">{{ $selectedTopic->title }}</div>
                             <div class="conversation-subtitle">
-                                Started by {{ $selectedTopic->user?->name ?? 'Unknown author' }}
+                                Started by {{ $selectedTopic->creator?->name ?? 'Unknown author' }}
                                 @if($selectedTopic->category)
                                     <span class="topic-dot">•</span>{{ $selectedTopic->category }}
                                 @endif

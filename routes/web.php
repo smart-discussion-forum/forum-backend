@@ -33,7 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/discussions/{id}', [TopicController::class, 'show']);
     Route::get('/topics/{id}', [TopicController::class, 'show']);
     Route::post('/topics/{topicId}/posts', [TopicController::class, 'storePost']);
-    Route::post('/topics/{topicId}/posts/{postId}/reaction', [TopicController::class, 'toggleReaction']);
+    // Route::post('/topics/{topicId}/posts/{postId}/reaction', [TopicController::class, 'toggleReaction']);
 
     // Quiz Management
     Route::get('/quizzes', [QuizController::class, 'index']);
