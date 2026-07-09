@@ -2,128 +2,89 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\RoleEnum;
 use App\Models\Quiz;
-use App\Models\Submission;
+use App\Models\QuizQuestion;
 use Illuminate\Http\Request;
 
 class QuizController extends Controller
+
 {
-    public function index()
-    {
-        $quizzes = Quiz::latest()->get();
-        return view('quizzes.index', compact('quizzes'));
-    }
-
-    public function create()
-    {
-        if (auth()->user()->role !== RoleEnum::Lecturer) {
-            abort(403);
-        }
-
-        return view('quizzes.create');
-    }
-
+// POST /quiz — Create a quiz (Lecturer only)
     public function store(Request $request)
     {
-        if (auth()->user()->role !== RoleEnum::Lecturer) {
-            abort(403);
-        }
-
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'start_time' => 'required|date',
-            'duration_minutes' => 'required|integer|min:1',
-            'target_category' => 'nullable|string',
-            'raw_questions' => 'required|string',
+        // Validate the request
+        $request->validate([
+            'title'           => 'required|string|max:150',
+            'target_category' => 'required|string|max:100',
+            'Publish_time'    => 'required',
+            'Duration'        => 'required|integer|min:1',
         ]);
 
-        $questions = [];
-        foreach (explode("\n", trim($data['raw_questions'])) as $line) {
-            if (!trim($line)) continue;
-            [$question, $optionsRaw, $correctIndex] = array_map('trim', explode('|', $line));
-            $questions[] = [
-                'question' => $question,
-                'options' => array_map('trim', explode(',', $optionsRaw)),
-                'correct_index' => (int) $correctIndex,
-            ];
-        }
+        // Make sure only lecturers can create quizzes
+        //if ($request->user()->role !== 'Lecturer') {
+         //   return response()->json([
+         //       'message' => 'Only lecturers can create quizzes'
+          //  ], 403);
+       // }
 
-        Quiz::create([
-            'lecturer_id' => auth()->id(),
-            'title' => $data['title'],
-            'questions' => $questions,
-            'start_time' => $data['start_time'],
-            'duration_minutes' => $data['duration_minutes'],
-            'target_category' => $data['target_category'] ?? null,
-            'status' => 'scheduled',
+        // Create the quiz
+        $quiz = Quiz::create([
+            'lecturer_id'     => 1,
+            'title'           => $request->title,
+            'target_category' => $request->target_category,
+            'Publish_time'    => $request->Publish_time,
+            'Duration'=> $request->Duration,
         ]);
 
-        return redirect('/quizzes')->with('success', 'Quiz created.');
+        return response()->json([
+            'message' => 'Quiz created successfully',
+            'quiz'    => $quiz
+        ], 201);
     }
 
-    public function announce($id)
+    // POST /quiz/{id}/questions — Add questions to a quiz
+    public function addQuestions(Request $request, $id)
     {
-        if (auth()->user()->role !== RoleEnum::Lecturer) {
-            abort(403);
+        // Find the quiz
+        $quiz = Quiz::find($id);
+        if (!$quiz) {
+            return response()->json([
+                'message' => 'Quiz not found'
+            ], 404);
         }
 
-        $quiz = Quiz::findOrFail($id);
-        $quiz->update([
-            'announced_at' => now(),
-            'status' => 'announced',
+        // Make sure only the lecturer who created it can add questions
+       // if ($request->user()->id !== $quiz->lecturer_id) {
+           // return response()->json([
+           //     'message' => 'You can only add questions to your own quiz'
+           // ], 403);
+       // }
+
+        // Validate questions
+        $request->validate([
+            'questions'                 => 'required|array|min:1',
+            'questions.*.Question'      => 'required|string',
+            'questions.*.Options'       => 'required|string',
+            'questions.*.Correct_answer'=> 'required|string',
+            'questions.*.Marks'         => 'required|integer|min:1',
         ]);
 
-        return back()->with('success', 'Quiz announcement sent.');
-    }
-
-    public function show($id)
-    {
-        $quiz = Quiz::findOrFail($id);
-        $now = now();
-
-        if ($now->lt($quiz->start_time)) {
-            return back()->with('success', 'Quiz has not started yet.');
-        }
-        if ($now->gt($quiz->end_time)) {
-            return redirect('/quizzes')->with('success', 'Quiz has closed.');
+        // Save each question
+        $saved = [];
+        foreach ($request->questions as $q) {
+            $saved[] = QuizQuestion::create([
+                'Quiz_id'        => $quiz->quiz_id,
+                'Question'       => $q['Question'],
+                'Options'        => $q['Options'],
+                'Correct_answer' => $q['Correct_answer'],
+                'Marks'          => $q['Marks'],
+            ]);
         }
 
-        return view('quizzes.take', compact('quiz'));
+        return response()->json([
+            'message'   => 'Questions added successfully',
+            'questions' => $saved
+        ], 201);
     }
 
-    public function submit(Request $request, $id)
-    {
-        $quiz = Quiz::findOrFail($id);
-        $answers = $request->input('answers', []);
-
-        $score = 0;
-        foreach ($quiz->questions as $i => $q) {
-            if (isset($answers[$i]) && (int) $answers[$i] === $q['correct_index']) {
-                $score++;
-            }
-        }
-
-        $submission = Submission::updateOrCreate(
-            ['quiz_id' => $quiz->id, 'student_id' => auth()->id()],
-            ['answers' => $answers, 'score' => $score, 'submitted_at' => now()]
-        );
-
-        return redirect('/quizzes/results/' . $submission->id);
-    }
-
-    public function results($submissionId)
-    {
-        $submission = Submission::with('quiz')->findOrFail($submissionId);
-        $quiz = $submission->quiz;
-        $total = count($quiz->questions);
-        $percent = $total > 0 ? ($submission->score / $total) * 100 : 0;
-
-        $grade = $percent >= 80 ? 'A' : ($percent >= 60 ? 'B' : ($percent >= 40 ? 'C' : 'D'));
-        $feedback = $percent >= 60
-            ? 'Good job — you passed this quiz.'
-            : 'Keep practicing — review the topic materials.';
-
-        return view('quizzes.results', compact('submission', 'quiz', 'grade', 'feedback'));
-    }
 }
