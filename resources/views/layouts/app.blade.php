@@ -441,13 +441,70 @@
         </div>
     @endauth
 </div>
-
-    <div class="screen-box @yield('box-style', 'wide')">
+<div class="screen-box @yield('box-style', 'wide')">
     @if(session('success'))
         <div class="success">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="error">{{ session('error') }}</div>
+    @endif
     @yield('content')
     </div>
+    @auth
+@if(auth()->user()->role->value === 'student')
+<div id="quizCountdownBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#4f7ca8,#2f5f84); color:#fff; text-align:center; padding:12px; font-weight:700;">
+    <span id="quizCountdownText"></span>
+</div>
+<script>
+    let quizRedirectTimer = null;
+    let quizPollTimer = null;
+
+    function checkUpcomingQuiz() {
+        fetch('/quizzes/upcoming-check')
+            .then(res => res.json())
+            .then(data => {
+                const banner = document.getElementById('quizCountdownBanner');
+                const text = document.getElementById('quizCountdownText');
+
+                if (!data.upcoming) {
+                    banner.style.display = 'none';
+                    return;
+                }
+
+                const seconds = data.upcoming.seconds_until_start;
+
+                if (seconds <= 30 && seconds > 0) {
+                    banner.style.display = 'block';
+                    let remaining = seconds;
+
+                    if (quizRedirectTimer) clearInterval(quizRedirectTimer);
+
+                    quizRedirectTimer = setInterval(() => {
+                        remaining--;
+                        text.textContent = `"${data.upcoming.title}" starts in ${remaining} second${remaining !== 1 ? 's' : ''}...`;
+
+                        if (remaining <= 0) {
+                            clearInterval(quizRedirectTimer);
+                            window.location.href = '/quizzes/' + data.upcoming.id;
+                        }
+                    }, 1000);
+
+                    text.textContent = `"${data.upcoming.title}" starts in ${remaining} second${remaining !== 1 ? 's' : ''}...`;
+                } else if (seconds <= 0) {
+                    window.location.href = '/quizzes/' + data.upcoming.id;
+                } else {
+                    banner.style.display = 'none';
+                }
+            })
+            .catch(() => {});
+    }
+
+    checkUpcomingQuiz();
+    quizPollTimer = setInterval(checkUpcomingQuiz, 5000);
+</script>
+@endif
+@endauth
+    
     @stack('scripts')
 </body>
 </html>

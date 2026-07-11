@@ -1,30 +1,31 @@
 @extends('layouts.app')
 @section('content')
     <div class="auth-card" style="max-width:900px; margin:24px auto; padding:28px;">
-        <div class="screen-title" style="color:var(--text); margin-bottom:8px;">Quiz configuration</div>
+        <div class="screen-title" style="color:var(--text); margin-bottom:8px;">Edit Quiz</div>
         <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
-            <a href="/quizzes" class="dash-btn">Back to Quizzes</a>
-            <a href="/dashboard" class="dash-btn">Dashboard</a>
-            <a href="/topics" class="dash-btn">Topics</a>
+            <a href="/quizzes/{{ $quiz->quiz_id }}" class="dash-btn">Back to Quiz</a>
+            <a href="/quizzes" class="dash-btn">All Quizzes</a>
         </div>
 
-        <form method="POST" action="/quizzes" id="quizForm">
+        <form method="POST" action="/quizzes/{{ $quiz->quiz_id }}" id="quizForm">
             @csrf
+            @method('PUT')
+
             <label>Quiz Title:</label>
-            <input type="text" name="title" required>
+            <input type="text" name="title" value="{{ $quiz->title }}" required>
 
             <label>Date:</label>
-            <input type="datetime-local" name="start_time" required>
+            <input type="datetime-local" name="start_time" value="{{ $quiz->start_time->format('Y-m-d\TH:i') }}" required>
 
             <label>Duration (minutes):</label>
-            <input type="number" name="duration_minutes" min="1" required>
+            <input type="number" name="duration_minutes" value="{{ $quiz->Duration }}" min="1" required>
 
             <label>Category:</label>
             <select name="target_category" required>
                 <option value="">All</option>
-                <option value="year1">Year 1</option>
-                <option value="year2">Year 2</option>
-                <option value="year3">Year 3</option>
+                <option value="year1" @selected($quiz->target_category === 'year1')>Year 1</option>
+                <option value="year2" @selected($quiz->target_category === 'year2')>Year 2</option>
+                <option value="year3" @selected($quiz->target_category === 'year3')>Year 3</option>
             </select>
 
             <div style="margin-top:20px;">
@@ -34,7 +35,7 @@
             </div>
 
             <div style="text-align:right; margin-top:20px;">
-                <button type="submit" class="btn">Save Quiz</button>
+                <button type="submit" class="btn">Save Changes</button>
             </div>
         </form>
     </div>
@@ -66,26 +67,35 @@
     <script>
         let questionCount = 0;
 
-        function addQuestion() {
+        function addQuestion(prefill = null) {
             questionCount++;
             const template = document.getElementById('questionTemplate').content.cloneNode(true);
             const block = template.querySelector('.question-block');
             block.dataset.index = questionCount;
             block.querySelector('.question-number').textContent = questionCount;
 
-            block.querySelector('.remove-question-btn').addEventListener('click', () => {
-                block.remove();
-            });
-
-            block.querySelector('.add-option-btn').addEventListener('click', () => {
-                addOption(block);
-            });
+            block.querySelector('.remove-question-btn').addEventListener('click', () => block.remove());
+            block.querySelector('.add-option-btn').addEventListener('click', () => addOption(block));
 
             document.getElementById('questionsContainer').appendChild(block);
 
-            // Start each question with 2 options by default
-            addOption(block);
-            addOption(block);
+            const container = document.querySelector(`.question-block[data-index="${questionCount}"]`);
+
+            if (prefill) {
+                container.querySelector('.question-text').value = prefill.question;
+                container.querySelector('.question-marks').value = prefill.marks;
+                prefill.options.forEach((opt, i) => {
+                    addOption(container);
+                    const optLabel = container.querySelectorAll('.options-container label')[i];
+                    optLabel.querySelector('.option-text').value = opt;
+                    if (i === prefill.correct) {
+                        optLabel.querySelector('.correct-option-radio').checked = true;
+                    }
+                });
+            } else {
+                addOption(container);
+                addOption(container);
+            }
         }
 
         function addOption(questionBlock) {
@@ -97,19 +107,29 @@
             const radio = template.querySelector('.correct-option-radio');
             radio.name = radioName;
 
-            label.querySelector('.remove-option-btn').addEventListener('click', () => {
-                label.remove();
-            });
+            label.querySelector('.remove-option-btn').addEventListener('click', () => label.remove());
 
             optionsContainer.appendChild(template);
         }
 
-        document.getElementById('addQuestionBtn').addEventListener('click', addQuestion);
+        document.getElementById('addQuestionBtn').addEventListener('click', () => addQuestion());
 
-        // Start with one question block by default
-        addQuestion();
+        // Prefill with existing questions
+        const existingQuestions = {!! json_encode($quiz->questions->map(function($q) {
+            return [
+                'question' => $q->Question,
+                'options' => $q->options_array,
+                'correct' => (int) $q->Correct_answer,
+                'marks' => $q->Marks,
+            ];
+        })) !!};
 
-        // Build the hidden "raw_questions" payload before submitting
+        if (existingQuestions.length > 0) {
+            existingQuestions.forEach(q => addQuestion(q));
+        } else {
+            addQuestion();
+        }
+
         document.getElementById('quizForm').addEventListener('submit', function (e) {
             const blocks = document.querySelectorAll('.question-block');
             const lines = [];
@@ -125,9 +145,7 @@
 
                 optionLabels.forEach((input, i) => {
                     options.push(input.value.trim());
-                    if (optionRadios[i].checked) {
-                        correctIndex = i;
-                    }
+                    if (optionRadios[i].checked) correctIndex = i;
                 });
 
                 if (questionText && options.length >= 2 && correctIndex !== null) {

@@ -58,7 +58,7 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users',
                 'password' => 'required|min:6',
-                'role' => 'required|in:student,teacher',
+                'role' => 'required|in:student,Lecturer,Admin',
                 'accepted_terms' => 'required',
                 'group_ids' => 'required|array|min:1',
                 'group_ids.*' => 'exists:groups,id',

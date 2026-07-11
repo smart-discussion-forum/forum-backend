@@ -8,7 +8,7 @@
             </div>
             <div style="background:rgba(79,124,168,0.12); padding:8px 14px; border-radius:999px; font-weight:700; color:#20324a;" id="timer">--:--</div>
         </div>
-        <form method="POST" action="/quizzes/{{ $quiz->id }}/submit" id="quizForm">
+        <form method="POST" action="/quizzes/{{ $quiz->id }}/submit" id="quizForm" onsubmit="return handleManualSubmit(event)">
             @csrf
             @foreach($quiz->questions as $i => $q)
                 <div class="panel" style="margin-bottom:16px;">
@@ -35,9 +35,21 @@
             const mins = Math.floor(diff / 60000);
             const secs = Math.floor((diff % 60000) / 1000);
             timerEl.textContent = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
-            if (diff <= 0) { clearInterval(interval); form.submit(); }
+           if (diff <= 0) {
+                clearInterval(interval);
+                isAutoSubmit = true;
+                form.submit();
+                    }
         }
         const interval = setInterval(tick, 1000);
         tick();
     </script>
+    <script>
+    let isAutoSubmit = false;
+
+    function handleManualSubmit(e) {
+        if (isAutoSubmit) return true;
+        return confirm('Are you sure you want to submit your answers? You cannot change them after this.');
+    }
+</script>
 @endsection

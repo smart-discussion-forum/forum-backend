@@ -37,11 +37,15 @@ Route::middleware('auth')->group(function () {
     // Route::post('/topics/{topicId}/posts/{postId}/reaction', [TopicController::class, 'toggleReaction']);
 
     // Quiz Management
-    Route::get('/quizzes', [QuizController::class, 'index']);
-    Route::get('/quizzes/create', [QuizController::class, 'create']);
-    Route::post('/quizzes', [QuizController::class, 'store']);
-    Route::get('/quizzes/{id}', [QuizController::class, 'show']);
-    Route::post('/quizzes/{id}/submit', [QuizController::class, 'submit']);
-    Route::post('/quizzes/{id}/announce', [QuizController::class, 'announce']);
-    Route::get('/quizzes/results/{submissionId}', [QuizController::class, 'results']);
+Route::get('/quizzes', [QuizController::class, 'index']);
+Route::get('/quizzes/create', [QuizController::class, 'create']);
+Route::get('/quizzes/upcoming-check', [QuizController::class, 'upcomingCheck']);
+Route::get('/quizzes/results/{submissionId}', [QuizController::class, 'results']);
+Route::post('/quizzes', [QuizController::class, 'store']);
+Route::get('/quizzes/{id}', [QuizController::class, 'show']);
+Route::get('/quizzes/{id}/edit', [QuizController::class, 'edit']);
+Route::put('/quizzes/{id}', [QuizController::class, 'update']);
+Route::get('/quizzes/{id}/submissions', [QuizController::class, 'submissions']);
+Route::post('/quizzes/{id}/submit', [QuizController::class, 'submit']);
+Route::post('/quizzes/{id}/announce', [QuizController::class, 'announce']);
 });

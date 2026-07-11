@@ -14,7 +14,7 @@
                     <span class="status-pill">{{ $quiz->announced_at ? 'Announced' : ucfirst($quiz->status) }}</span>
                 </td>
                 <td class="quiz-actions">
-                    @if(auth()->user()->role === 'teacher' && !$quiz->announced_at)
+                    @if(auth()->user()->role->value === 'Lecturer' && !$quiz->announced_at)
                         <form method="POST" action="/quizzes/{{ $quiz->id }}/announce" style="display:inline;">
                             @csrf
                             <button type="submit" class="chat-btn">Announce</button>
@@ -28,7 +28,7 @@
             <tr><td colspan="4">No quizzes yet.</td></tr>
         @endforelse
     </table>
-    @if(auth()->user()->role === 'teacher')
+    @if(auth()->user()->role ->value === 'Lecturer')
         <div style="display:flex; justify-content:flex-end; margin-top:18px;">
             <a href="/quizzes/create" class="btn">Create Quiz</a>
         </div>
