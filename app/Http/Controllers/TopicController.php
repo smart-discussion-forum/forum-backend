@@ -11,7 +11,7 @@ class TopicController extends Controller
 {
     public function index()
     {
-        $topics = Topic::with('user')
+        $topics = Topic::with('creator')
             ->withCount('posts')
             ->latest()
             ->get();
@@ -29,7 +29,7 @@ class TopicController extends Controller
 
     public function discussions()
     {
-        $topics = Topic::with('user')->latest()->get();
+        $topics = Topic::with('creator')->latest()->get();
         $activeTopic = $topics->first();
         $posts = $activeTopic ? $activeTopic->posts()->with('user')->withCount('reactions')->latest()->get() : collect();
         $reactedPostIds = $posts->isNotEmpty()
@@ -62,12 +62,12 @@ class TopicController extends Controller
 
     public function show($id)
     {
-        $topic = Topic::with('user')->findOrFail($id);
+        $topic = Topic::with('creator')->findOrFail($id);
         $posts = $topic->posts()->with('user')->withCount('reactions')->latest()->get();
         $reactedPostIds = $posts->isNotEmpty()
             ? PostReaction::where('user_id', auth()->id())->whereIn('post_id', $posts->pluck('id'))->pluck('post_id')->all()
             : [];
-        $topics = Topic::with('user')->latest()->get();
+        $topics = Topic::with('creator')->latest()->get();
 
         return view('discussions.index', compact('topic', 'topics', 'posts', 'reactedPostIds'));
     }
