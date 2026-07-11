@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\RoleEnum;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,15 +10,22 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureIsLecturer
 {
     /**
-     * Allow the request through only if the authenticated user is a Lecturer
-     * or an Admin (Admins are treated as a superset of Lecturer permissions).
+     * Allow the request through if the user is a Lecturer, OR an Admin
+     * (Admins are a superset of Lecturer permissions). Registered as the
+     * 'is_lecturer' alias in bootstrap/app.php.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $role = $request->user()?->role;
+        $user = $request->user();
 
-        if (! in_array($role, [RoleEnum::Lecturer, RoleEnum::Admin], true)) {
-            abort(403, 'This action is restricted to lecturers or administrators.');
+        if (! $user || ! in_array($user->role, [User::ROLE_LECTURER, User::ROLE_ADMIN], true)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Forbidden. This action requires the Lecturer role.',
+                ], 403);
+            }
+
+            abort(403, 'This page is only available to Lecturers.');
         }
 
         return $next($request);
