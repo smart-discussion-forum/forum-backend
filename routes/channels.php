@@ -9,4 +9,3 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('group.{groupId}', function ($user, $groupId) {
     return $user->groups()->where('groups.id', $groupId)->exists();
 });
-
