@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
 
     // Discussion Forum
     Route::get('/topics', [TopicController::class, 'index']);
+    Route::get('/topics/search', [TopicController::class, 'search']);
     Route::get('/topics/create', [TopicController::class, 'create']);
     Route::post('/topics', [TopicController::class, 'store']);
     Route::get('/discussions', [TopicController::class, 'discussions']);
