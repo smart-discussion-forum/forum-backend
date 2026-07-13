@@ -20,7 +20,7 @@
             <label>I am a:</label>
             <select name="role">
                 <option value="student">Student</option>
-                <option value="teacher">Lecturer</option>
+                <option value="lecturer">Lecturer</option>
                 <option value="admin">Admin</option>
             </select>
 
