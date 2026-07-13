@@ -11,7 +11,9 @@ class QuizController extends Controller
 {
     public function index()
     {
-        $quizzes = Quiz::latest()->get();
+        // Fixed: Quiz has $timestamps = false, so no created_at exists to
+        // sort by via latest(). Sorting by Publish_time instead.
+        $quizzes = Quiz::orderBy('Publish_time', 'desc')->get();
         return view('quizzes.index', compact('quizzes'));
     }
 
@@ -49,6 +51,8 @@ class QuizController extends Controller
             ];
         }
 
+        // NOT FIXED: this still writes fields that don't exist as columns
+        // on the real quizzes table. See chat for details.
         Quiz::create([
             'lecturer_id' => auth()->id(),
             'title' => $data['title'],
@@ -68,6 +72,7 @@ class QuizController extends Controller
             abort(403);
         }
 
+        // NOT FIXED: announced_at / status columns don't exist on quizzes.
         $quiz = Quiz::findOrFail($id);
         $quiz->update([
             'announced_at' => now(),
@@ -79,6 +84,7 @@ class QuizController extends Controller
 
     public function show($id)
     {
+        // NOT FIXED: start_time / end_time don't exist on quizzes.
         $quiz = Quiz::findOrFail($id);
         $now = now();
 
@@ -94,6 +100,7 @@ class QuizController extends Controller
 
     public function submit(Request $request, $id)
     {
+        // NOT FIXED: $quiz->questions and the Submission model don't exist.
         $quiz = Quiz::findOrFail($id);
         $answers = $request->input('answers', []);
 
@@ -114,6 +121,7 @@ class QuizController extends Controller
 
     public function results($submissionId)
     {
+        // NOT FIXED: depends on the same missing Submission model.
         $submission = Submission::with('quiz')->findOrFail($submissionId);
         $quiz = $submission->quiz;
         $total = count($quiz->questions);
