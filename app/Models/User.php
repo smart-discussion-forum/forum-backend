@@ -6,10 +6,12 @@ use App\Enums\RoleEnum;
 use App\Enums\StatusEnum;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+Use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use HasApiTokens ,HasFactory, Notifiable;
 
     protected $fillable = ['name', 'email', 'password','role', 'status','last_active'];
 
