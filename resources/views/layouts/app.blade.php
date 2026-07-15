@@ -458,7 +458,8 @@
 <script>
     let quizRedirectTimer = null;
     let quizPollTimer = null;
-    const countdownWindowSeconds = 300;
+    // Only show the countdown banner within this many seconds before start (30s)
+    const countdownWindowSeconds = 30;
 
     function formatCountdown(totalSeconds) {
         const mins = Math.floor(totalSeconds / 60);
@@ -490,8 +491,15 @@
                 }
 
                 if (data.upcoming.phase === 'active') {
+                    const targetPath = '/quizzes/' + data.upcoming.id;
+                    // If already viewing the quiz page, don't show the banner
+                    if (window.location.pathname.startsWith(targetPath)) {
+                        banner.style.display = 'none';
+                        return;
+                    }
+
                     banner.style.display = 'block';
-                    text.textContent = `"${data.upcoming.title}" is live now. Opening quiz...`;
+                    text.textContent = `"${data.upcoming.title}" is live now.`;
                     redirectToQuiz(data.upcoming.id);
                     return;
                 }
