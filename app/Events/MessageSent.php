@@ -23,7 +23,7 @@ class MessageSent implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('private-group.'.$this->message->group_id),
+            new PrivateChannel('group.'.$this->message->group_id),
         ];
     }
 

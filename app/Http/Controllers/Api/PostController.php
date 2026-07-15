@@ -41,6 +41,22 @@ class PostController extends Controller
             'content' => 'required|string',
         ]);
 
+        $existing = Post::where('topic_id', $topicId)
+            ->where('user_id', $user->id)
+            ->where('content', $data['content'])
+            ->where('created_at', '>=', now()->subSeconds(5))
+            ->latest('id')
+            ->first();
+
+        if ($existing) {
+            $existing->load('user:id,name', 'topic:id,group_id');
+
+            return response()->json([
+                'success' => true,
+                'post' => $existing,
+            ]);
+        }
+
         $post = Post::create([
             'topic_id' => $topicId,
             'user_id' => $user->id,

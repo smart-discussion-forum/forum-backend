@@ -32,7 +32,7 @@
     <h3 style="color:var(--text); font-weight:600; font-size:1.125rem; margin-bottom:12px;">Lecturer actions</h3>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px;">
         <a href="{{ route('quizzes.create') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Schedule a quiz</a>
-        <a href="{{ route('topics.create') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Create a topic</a>
+        <a href="{{ route('chat') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Group Chat / Topics</a>
     </div>
 
 </div>

@@ -20,9 +20,12 @@
         </div>
 
         <div style="flex:1;">
-            <div id="chat-header" style="margin-bottom:15px; font-weight:bold;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div id="chat-header" style="font-weight:bold;">
                 Select a group to chat
             </div>
+            <a id="topics-link" href="#" class="dash-btn" style="display:none;">Topics</a>
+        </div>
             <div id="messages" style="height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:15px; margin-bottom:15px;">
             </div>
             <div style="display:flex; gap:10px;">
@@ -74,13 +77,19 @@ function escapeHtml(text) {
 
 function renderMessage(msg) {
     const isMe = String(msg.sender_id) === String(authUserId);
-    const senderName = msg.sender?.name || (isMe ? 'You' : 'Unknown');
-    return `<div style="text-align:${isMe ? 'right' : 'left'}; margin-bottom:10px;">
+    const senderName = isMe ? 'You' : (msg.sender?.name || 'Unknown');
+    return `<div data-message-id="${escapeHtml(String(msg.id))}" style="text-align:${isMe ? 'right' : 'left'}; margin-bottom:10px;">
         <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">${escapeHtml(senderName)}</div>
         <span style="background:${isMe ? '#0084ff' : '#25D366'}; padding:8px 12px; border-radius:8px; display:inline-block; color:white;">
             ${escapeHtml(msg.content)}
         </span>
     </div>`;
+}
+
+function removeMessageById(id) {
+    messageIds.delete(id);
+    const el = document.querySelector(`[data-message-id="${CSS.escape(String(id))}"]`);
+    if (el) el.remove();
 }
 
 function appendMessage(msg) {
@@ -130,6 +139,9 @@ function openGroup(groupId, groupName) {
     document.getElementById('chat-header').innerText = groupName;
     document.getElementById('message-input').disabled = false;
     document.getElementById('send-btn').disabled = false;
+    const topicsLink = document.getElementById('topics-link');
+    topicsLink.href = '/groups/' + groupId + '/topics';
+    topicsLink.style.display = 'inline-block';
 
     document.querySelectorAll('.group-item').forEach(el => {
         el.style.background = el.dataset.groupId == groupId ? 'var(--accent-soft)' : '';
@@ -179,11 +191,19 @@ function sendMessage() {
             content: content,
         }),
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.message) {
-            appendMessage(data.message);
+    .then(async res => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success || !data.message) {
+            throw new Error(typeof data.message === 'string' ? data.message : 'Failed to send message.');
         }
+        // Replace optimistic "You" bubble with the saved message (same bubble, real id)
+        removeMessageById(tempMessage.id);
+        appendMessage(data.message);
+    })
+    .catch((err) => {
+        removeMessageById(tempMessage.id);
+        input.value = content;
+        alert(err.message || 'Failed to send message.');
     })
     .finally(() => {
         input.disabled = false;
@@ -195,5 +215,13 @@ function sendMessage() {
 document.getElementById('message-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') sendMessage();
 });
+const urlParams = new URLSearchParams(window.location.search);
+const initialGroupId = urlParams.get('group');
+if (initialGroupId) {
+    const groupEl = document.querySelector('.group-item[data-group-id="' + initialGroupId + '"]');
+    if (groupEl) {
+        openGroup(Number(initialGroupId), groupEl.textContent.trim());
+    }
+}
 </script>
 @endpush

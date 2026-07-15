@@ -25,17 +25,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/password', [AuthController::class, 'updatePassword']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
 
-    // Discussion Forum
-    Route::get('/topics', [TopicController::class, 'index']);
-    Route::get('/topics/search', [TopicController::class, 'search']);
-    Route::get('/topics/create', [TopicController::class, 'create']);
-    Route::post('/topics', [TopicController::class, 'store']);
-    Route::get('/discussions', [TopicController::class, 'discussions']);
-    Route::get('/discussions/{id}', [TopicController::class, 'show']);
-    Route::get('/topics/{id}', [TopicController::class, 'show']);
-    Route::post('/topics/{topicId}/posts', [TopicController::class, 'storePost']);
-    // Route::post('/topics/{topicId}/posts/{postId}/reaction', [TopicController::class, 'toggleReaction']);
-
+// Topics, now scoped under a group's chat
+    Route::get('/groups/{groupId}/topics', [TopicController::class, 'groupIndex']);
+    Route::get('/groups/{groupId}/topics/create', [TopicController::class, 'groupCreate']);
+    Route::post('/groups/{groupId}/topics', [TopicController::class, 'groupStore']);
+    Route::get('/groups/{groupId}/topics/{id}', [TopicController::class, 'groupShow']);
+    Route::post('/groups/{groupId}/topics/{topicId}/posts', [TopicController::class, 'groupStorePost']);
     // Quiz Management
 Route::get('/quizzes', [QuizController::class, 'index']);
 Route::get('/quizzes/create', [QuizController::class, 'create']);
