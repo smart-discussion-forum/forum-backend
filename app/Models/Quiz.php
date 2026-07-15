@@ -34,6 +34,16 @@ class Quiz extends Model
         return $this->attributes['Target_category'] ?? null;
     }
 
+    public function getGroupIdAttribute()
+    {
+        return (int) ($this->attributes['Target_category'] ?? 0);
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(Group::class, 'Target_category', 'id');
+    }
+
     public function getStartTimeAttribute()
     {
         return isset($this->attributes['Publish_time'])

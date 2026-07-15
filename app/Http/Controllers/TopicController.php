@@ -25,41 +25,42 @@ class TopicController extends Controller
 
         return view('topics.index', compact('topicSummaries'));
     }
+
     public function search(Request $request)
-{
-    $query = Topic::with('creator')->withCount('posts');
+    {
+        $query = Topic::with('creator')->withCount('posts');
 
-    if ($request->filled('keyword')) {
-        $query->where('title', 'like', '%' . $request->keyword . '%');
+        if ($request->filled('keyword')) {
+            $query->where('title', 'like', '%' . $request->keyword . '%');
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        $topics = $query->latest()->get();
+
+        $topicSummaries = $topics->map(function ($topic) {
+            return [
+                'topic' => $topic,
+                'latest_post' => $topic->posts()->with('user')->latest()->first(),
+                'post_count' => $topic->posts_count,
+            ];
+        });
+
+        return view('topics.index', [
+            'topicSummaries' => $topicSummaries,
+            'keyword' => $request->keyword,
+            'category' => $request->category,
+        ]);
     }
-
-    if ($request->filled('category')) {
-        $query->where('category', $request->category);
-    }
-
-    $topics = $query->latest()->get();
-
-    $topicSummaries = $topics->map(function ($topic) {
-        return [
-            'topic' => $topic,
-            'latest_post' => $topic->posts()->with('user')->latest()->first(),
-            'post_count' => $topic->posts_count,
-        ];
-    });
-
-    return view('topics.index', [
-        'topicSummaries' => $topicSummaries,
-        'keyword' => $request->keyword,
-        'category' => $request->category,
-    ]);
-}
 
     public function discussions()
     {
         $topics = Topic::with('creator')->latest()->get();
         $activeTopic = $topics->first();
-        $posts = $activeTopic ? $activeTopic->posts()->with('user')->latest()->get() : collect();
-        $reactedPostIds = []; // reactions not available yet (no post_reactions table)
+        $posts = $activeTopic ? $activeTopic->posts()->with('user')->orderBy('created_at', 'asc')->get() : collect();
+        $reactedPostIds = [];
 
         return view('discussions.index', compact('topics', 'activeTopic', 'posts', 'reactedPostIds'));
     }
@@ -90,8 +91,8 @@ class TopicController extends Controller
     public function show($id)
     {
         $topic = Topic::with('creator')->findOrFail($id);
-        $posts = $topic->posts()->with('user')->latest()->get();
-        $reactedPostIds = []; // reactions not available yet (no post_reactions table)
+        $posts = $topic->posts()->with('user')->orderBy('created_at', 'asc')->get();
+        $reactedPostIds = [];
         $topics = Topic::with('creator')->latest()->get();
 
         return view('discussions.index', compact('topic', 'topics', 'posts', 'reactedPostIds'));

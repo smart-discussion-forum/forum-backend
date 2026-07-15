@@ -20,12 +20,12 @@
             <label>Duration (minutes):</label>
             <input type="number" name="duration_minutes" value="{{ $quiz->Duration }}" min="1" required>
 
-            <label>Category:</label>
-            <select name="target_category" required>
-                <option value="">All</option>
-                <option value="year1" @selected($quiz->target_category === 'year1')>Year 1</option>
-                <option value="year2" @selected($quiz->target_category === 'year2')>Year 2</option>
-                <option value="year3" @selected($quiz->target_category === 'year3')>Year 3</option>
+            <label>Group:</label>
+            <select name="group_id" required>
+                <option value="">-- Select a group --</option>
+                @foreach($groups as $group)
+                    <option value="{{ $group->id }}" @selected($quiz->group_id == $group->id)>{{ $group->name }}</option>
+                @endforeach
             </select>
 
             <div style="margin-top:20px;">
@@ -114,7 +114,6 @@
 
         document.getElementById('addQuestionBtn').addEventListener('click', () => addQuestion());
 
-        // Prefill with existing questions
         const existingQuestions = {!! json_encode($quiz->questions->map(function($q) {
             return [
                 'question' => $q->Question,

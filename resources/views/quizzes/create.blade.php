@@ -19,12 +19,12 @@
             <label>Duration (minutes):</label>
             <input type="number" name="duration_minutes" min="1" required>
 
-            <label>Category:</label>
-            <select name="target_category" required>
-                <option value="">All</option>
-                <option value="year1">Year 1</option>
-                <option value="year2">Year 2</option>
-                <option value="year3">Year 3</option>
+            <label>Group:</label>
+            <select name="group_id" required>
+                <option value="">-- Select a group --</option>
+                @foreach($groups as $group)
+                    <option value="{{ $group->id }}">{{ $group->name }}</option>
+                @endforeach
             </select>
 
             <div style="margin-top:20px;">
@@ -83,7 +83,6 @@
 
             document.getElementById('questionsContainer').appendChild(block);
 
-            // Start each question with 2 options by default
             addOption(block);
             addOption(block);
         }
@@ -106,10 +105,8 @@
 
         document.getElementById('addQuestionBtn').addEventListener('click', addQuestion);
 
-        // Start with one question block by default
         addQuestion();
 
-        // Build the hidden "raw_questions" payload before submitting
         document.getElementById('quizForm').addEventListener('submit', function (e) {
             const blocks = document.querySelectorAll('.question-block');
             const lines = [];

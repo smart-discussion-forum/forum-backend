@@ -90,4 +90,64 @@
             </section>
         </div>
     </div>
+    @if($selectedTopic)
+<script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
+<script>
+const token = @json(session('api_token'));
+
+window.Pusher = Pusher;
+window.Echo = new Echo({
+    broadcaster: 'reverb',
+    key: @json(env('REVERB_APP_KEY')),
+    wsHost: @json(env('REVERB_HOST', 'localhost')),
+    wsHost: @json(env('REVERB_HOST', 'localhost')),
+    wsPort: 8080,
+    wssPort: 8080,
+    forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
+    forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
+    enabledTransports: ['ws', 'wss'],
+    authEndpoint: '/broadcasting/auth',
+    auth: {
+        headers: {
+            Authorization: 'Bearer ' + token,
+            Accept: 'application/json',
+        },
+    },
+});
+
+console.log('Echo connector:', window.Echo.connector);
+
+const currentGroupId = {{ $selectedTopic->group_id }};
+const currentTopicId = {{ $selectedTopic->id }};
+const currentUserId = {{ auth()->id() }};
+
+window.Echo.private('group.' + currentGroupId)
+    .listen('.post.created', (e) => {
+        if (e.topic_id !== currentTopicId) {
+            return; // a post in a different topic within the same group
+        }
+
+        const thread = document.querySelector('.chat-thread');
+        const emptyPanel = thread.querySelector('.empty-panel');
+        if (emptyPanel) emptyPanel.remove();
+
+        const isMine = e.user.id === currentUserId;
+        const row = document.createElement('div');
+        row.className = 'chat-row' + (isMine ? ' mine' : '');
+
+        row.innerHTML = `
+            <div class="chat-bubble">
+                <div class="chat-meta">${e.user.name}</div>
+                <div class="chat-text"></div>
+                <div class="chat-time">${new Date(e.created_at).toLocaleString()}</div>
+            </div>
+        `;
+        row.querySelector('.chat-text').textContent = e.content;
+
+        thread.appendChild(row);
+        thread.scrollTop = thread.scrollHeight;
+    });
+</script>
+@endif
 @endsection
