@@ -458,6 +458,20 @@
 <script>
     let quizRedirectTimer = null;
     let quizPollTimer = null;
+    const countdownWindowSeconds = 300;
+
+    function formatCountdown(totalSeconds) {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function redirectToQuiz(quizId) {
+        const targetPath = '/quizzes/' + quizId;
+        if (!window.location.pathname.startsWith(targetPath)) {
+            window.location.href = targetPath;
+        }
+    }
 
     function checkUpcomingQuiz() {
         fetch('/quizzes/upcoming-check')
@@ -468,12 +482,23 @@
 
                 if (!data.upcoming) {
                     banner.style.display = 'none';
+                    if (quizRedirectTimer) {
+                        clearInterval(quizRedirectTimer);
+                        quizRedirectTimer = null;
+                    }
+                    return;
+                }
+
+                if (data.upcoming.phase === 'active') {
+                    banner.style.display = 'block';
+                    text.textContent = `"${data.upcoming.title}" is live now. Opening quiz...`;
+                    redirectToQuiz(data.upcoming.id);
                     return;
                 }
 
                 const seconds = data.upcoming.seconds_until_start;
 
-                if (seconds <= 30 && seconds > 0) {
+                if (seconds <= countdownWindowSeconds) {
                     banner.style.display = 'block';
                     let remaining = seconds;
 
@@ -481,17 +506,16 @@
 
                     quizRedirectTimer = setInterval(() => {
                         remaining--;
-                        text.textContent = `"${data.upcoming.title}" starts in ${remaining} second${remaining !== 1 ? 's' : ''}...`;
+                        text.textContent = `"${data.upcoming.title}" starts in ${formatCountdown(Math.max(0, remaining))}`;
 
                         if (remaining <= 0) {
                             clearInterval(quizRedirectTimer);
-                            window.location.href = '/quizzes/' + data.upcoming.id;
+                            quizRedirectTimer = null;
+                            redirectToQuiz(data.upcoming.id);
                         }
                     }, 1000);
 
-                    text.textContent = `"${data.upcoming.title}" starts in ${remaining} second${remaining !== 1 ? 's' : ''}...`;
-                } else if (seconds <= 0) {
-                    window.location.href = '/quizzes/' + data.upcoming.id;
+                    text.textContent = `"${data.upcoming.title}" starts in ${formatCountdown(remaining)}`;
                 } else {
                     banner.style.display = 'none';
                 }

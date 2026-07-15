@@ -19,7 +19,7 @@
                         <td>{{ $quiz->group->name ?? 'Unknown group' }}</td>
                         <td>{{ $quiz->start_time->format('d M H:i') }}</td>
                         <td>
-                            <span class="status-pill">{{ $quiz->announced_at ? 'Announced' : ucfirst($quiz->status) }}</span>
+                            <span class="status-pill">{{ ucfirst($quiz->status) }}{{ $quiz->announced_at ? ' · Sent' : '' }}</span>
                         </td>
                         <td class="quiz-actions">
                             @if(auth()->id() === $quiz->Lecturer_id && !$quiz->announced_at)
@@ -89,7 +89,7 @@
                         <td><a href="/quizzes/${e.id}">${e.title}</a></td>
                         <td>-</td>
                         <td>${new Date(e.start_time).toLocaleString()}</td>
-                        <td><span class="status-pill">Announced</span></td>
+                        <td><span class="status-pill">Upcoming · Sent</span></td>
                         <td></td>
                     `;
                     tbody.prepend(row);
@@ -99,6 +99,31 @@
     @endif
 
     <script>
+        const csrfToken = @json(csrf_token());
+
+        function buildStatusLabel(q) {
+            const status = q.status.charAt(0).toUpperCase() + q.status.slice(1);
+            return q.announced ? status + ' · Sent' : status;
+        }
+
+        function buildActionsHtml(q) {
+            let html = '';
+
+            if (q.can_announce) {
+                html += '<form method="POST" action="/quizzes/' + q.id + '/announce" style="display:inline;">' +
+                    '<input type="hidden" name="_token" value="' + csrfToken + '">' +
+                    '<button type="submit" class="chat-btn">Announce</button></form>';
+            } else if (q.announced) {
+                html += '<span class="sidebar-copy">Sent ' + (q.announced_at_display || '') + '</span>';
+            }
+
+            if (q.my_attempt_id) {
+                html += '<span class="sidebar-copy">Completed</span>';
+            }
+
+            return html;
+        }
+
         // Polling fallback: refreshes the quiz list every 5s regardless of
         // whether websockets/Reverb are working. This is what keeps the
         // table in sync even if the Echo listener above never fires.
@@ -124,10 +149,6 @@
                             ? '<a href="/quizzes/results/' + q.my_attempt_id + '">' + q.title + '</a>'
                             : '<a href="/quizzes/' + q.id + '">' + q.title + '</a>';
 
-                        const statusLabel = q.announced
-                            ? 'Announced'
-                            : q.status.charAt(0).toUpperCase() + q.status.slice(1);
-
                         if (!row) {
                             row = document.createElement('tr');
                             row.dataset.quizId = q.id;
@@ -138,8 +159,8 @@
                             '<td>' + titleCell + '</td>' +
                             '<td>' + q.group_name + '</td>' +
                             '<td>' + q.start_time_display + '</td>' +
-                            '<td><span class="status-pill">' + statusLabel + '</span></td>' +
-                            '<td class="quiz-actions">' + (q.my_attempt_id ? '<span class="sidebar-copy">Completed</span>' : '') + '</td>';
+                            '<td><span class="status-pill">' + buildStatusLabel(q) + '</span></td>' +
+                            '<td class="quiz-actions">' + buildActionsHtml(q) + '</td>';
                     });
                 })
                 .catch(() => {});

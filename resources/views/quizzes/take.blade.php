@@ -10,6 +10,7 @@
         </div>
         <form method="POST" action="/quizzes/{{ $quiz->id }}/submit" id="quizForm" onsubmit="return handleManualSubmit(event)">
             @csrf
+            <input type="hidden" name="auto_submitted" id="autoSubmitted" value="0">
             @foreach($quiz->questions as $i => $q)
                 <div class="panel" style="margin-bottom:16px;">
                     <p style="margin-top:0;"><strong>{{ $q['question'] }}</strong></p>
@@ -26,30 +27,33 @@
         </form>
     </div>
     <script>
+        let isAutoSubmit = false;
         const endTime = new Date("{{ $quiz->end_time->toIso8601String() }}").getTime();
         const timerEl = document.getElementById('timer');
         const form = document.getElementById('quizForm');
+        const autoSubmittedInput = document.getElementById('autoSubmitted');
+
         function tick() {
             const now = Date.now();
             const diff = Math.max(0, endTime - now);
             const mins = Math.floor(diff / 60000);
             const secs = Math.floor((diff % 60000) / 1000);
-            timerEl.textContent = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
-           if (diff <= 0) {
+            timerEl.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+
+            if (diff <= 0) {
                 clearInterval(interval);
                 isAutoSubmit = true;
+                autoSubmittedInput.value = '1';
                 form.submit();
-                    }
+            }
         }
+
         const interval = setInterval(tick, 1000);
         tick();
-    </script>
-    <script>
-    let isAutoSubmit = false;
 
-    function handleManualSubmit(e) {
-        if (isAutoSubmit) return true;
-        return confirm('Are you sure you want to submit your answers? You cannot change them after this.');
-    }
-</script>
+        function handleManualSubmit(e) {
+            if (isAutoSubmit) return true;
+            return confirm('Are you sure you want to submit your answers? You cannot change them after this.');
+        }
+    </script>
 @endsection

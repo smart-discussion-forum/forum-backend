@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class Quiz extends Model
@@ -16,7 +15,13 @@ class Quiz extends Model
         'Title',
         'Target_category',
         'Publish_time',
-        'Duration'
+        'Duration',
+        'announced_at',
+    ];
+
+    protected $casts = [
+        'announced_at' => 'datetime',
+        'Publish_time' => 'datetime',
     ];
 
     public function getIdAttribute()
@@ -59,14 +64,10 @@ class Quiz extends Model
         return Carbon::parse($this->attributes['Publish_time'])->addMinutes((int) $this->attributes['Duration']);
     }
 
-    public function getAnnouncedAtAttribute()
-    {
-        return Cache::get('quiz_announced_' . $this->quiz_id);
-    }
-
     public function markAnnounced()
     {
-        Cache::put('quiz_announced_' . $this->quiz_id, now(), now()->addYear());
+        $this->announced_at = now();
+        $this->save();
     }
 
     public function getStatusAttribute()

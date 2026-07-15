@@ -70,8 +70,8 @@ public function index()
             'Target_category' => $data['group_id'],
             'Publish_time' => $data['start_time'],
             'Duration' => $data['duration_minutes'],
+            'announced_at' => null,
         ]);
-        \Illuminate\Support\Facades\Cache::forget('quiz_announced_' . $quiz->quiz_id);
 
         $lines = array_filter(array_map('trim', explode("\n", $data['raw_questions'])));
 
@@ -105,6 +105,15 @@ public function index()
 
         if ($isOwner) {
             return view('quizzes.owner-view', compact('quiz'));
+        }
+
+        $myGroupIds = auth()->user()->groups()->pluck('groups.id')->map(fn ($id) => (string) $id);
+        if (!$myGroupIds->contains((string) $quiz->group_id)) {
+            abort(403, 'You are not in the group for this quiz.');
+        }
+
+        if (!$quiz->announced_at) {
+            return redirect('/quizzes')->with('error', 'This quiz has not been announced yet.');
         }
 
         if ($now->lt($quiz->start_time->copy()->subSeconds(5))) {
@@ -180,6 +189,7 @@ public function index()
             'Target_category' => $data['group_id'],
             'Publish_time' => $data['start_time'],
             'Duration' => $data['duration_minutes'],
+            'announced_at' => null,
         ]);
 
         $quiz->questions()->delete();
@@ -300,7 +310,7 @@ public function index()
         ->get()
         ->keyBy('quiz_id');
 
-    $payload = $quizzes->map(function ($quiz) use ($myAttempts) {
+    $payload = $quizzes->map(function ($quiz) use ($myAttempts, $user) {
         return [
             'id' => $quiz->quiz_id,
             'title' => $quiz->title,
@@ -308,7 +318,10 @@ public function index()
             'start_time' => $quiz->start_time?->toIso8601String(),
             'start_time_display' => $quiz->start_time?->format('d M H:i'),
             'announced' => (bool) $quiz->announced_at,
+            'announced_at_display' => $quiz->announced_at?->format('d M H:i'),
             'status' => $quiz->status,
+            'is_owner' => $quiz->Lecturer_id === $user->id,
+            'can_announce' => $quiz->Lecturer_id === $user->id && !$quiz->announced_at,
             'my_attempt_id' => $myAttempts->has($quiz->quiz_id) ? $myAttempts[$quiz->quiz_id]->id : null,
         ];
     })->values();
@@ -324,25 +337,48 @@ public function upcomingCheck()
     }
 
     $myGroupIds = $user->groups()->pluck('groups.id')->map(fn ($id) => (string) $id);
+    $attemptedQuizIds = QuizAttempt::where('Student_id', $user->id)->pluck('quiz_id');
 
-    $quiz = Quiz::all()
-        ->filter(function ($q) use ($myGroupIds) {
+    $eligible = Quiz::all()
+        ->filter(function ($q) use ($myGroupIds, $attemptedQuizIds) {
             return $q->announced_at
-                && now()->lt($q->start_time)
-                && $myGroupIds->contains((string) $q->group_id);
-        })
+                && $myGroupIds->contains((string) $q->group_id)
+                && !$attemptedQuizIds->contains($q->quiz_id)
+                && now()->lte($q->end_time);
+        });
+
+    $active = $eligible
+        ->filter(fn ($q) => now()->gte($q->start_time))
+        ->sortBy(fn ($q) => $q->end_time)
+        ->first();
+
+    if ($active) {
+        return response()->json([
+            'upcoming' => [
+                'id' => $active->quiz_id,
+                'title' => $active->title,
+                'phase' => 'active',
+                'seconds_until_start' => 0,
+                'seconds_until_end' => max(0, (int) now()->diffInSeconds($active->end_time, false)),
+            ],
+        ]);
+    }
+
+    $upcoming = $eligible
+        ->filter(fn ($q) => now()->lt($q->start_time))
         ->sortBy(fn ($q) => $q->start_time)
         ->first();
 
-    if (!$quiz) {
+    if (!$upcoming) {
         return response()->json(['upcoming' => null]);
     }
 
     return response()->json([
         'upcoming' => [
-            'id' => $quiz->quiz_id,
-            'title' => $quiz->title,
-            'seconds_until_start' => (int) now()->diffInSeconds($quiz->start_time, false),
+            'id' => $upcoming->quiz_id,
+            'title' => $upcoming->title,
+            'phase' => 'upcoming',
+            'seconds_until_start' => max(0, (int) now()->diffInSeconds($upcoming->start_time, false)),
         ],
     ]);
 }
