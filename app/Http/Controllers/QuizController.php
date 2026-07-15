@@ -10,31 +10,37 @@ use Illuminate\Http\Request;
 
 class QuizController extends Controller
 {
-    public function index()
-    {
-        $user = auth()->user();
+public function index()
+{
+    $user = auth()->user();
 
-        if ($user->role->value === 'Admin') {
-            $quizzes = Quiz::orderBy('quiz_id', 'desc')->get();
-        } else {
-            $myGroupIds = $user->groups()->pluck('groups.id')->map(fn ($id) => (string) $id);
-            $quizzes = Quiz::orderBy('quiz_id', 'desc')
-                ->get()
-                ->filter(fn ($q) => $myGroupIds->contains((string) $q->group_id))
-                ->values();
-        }
-
-        $myAttempts = QuizAttempt::where('Student_id', $user->id)
+    if ($user->role->value === 'Admin') {
+        $quizzes = Quiz::orderBy('quiz_id', 'desc')->get();
+    } else {
+        $myGroupIds = $user->groups()->pluck('groups.id')->map(fn ($id) => (string) $id);
+        $quizzes = Quiz::orderBy('quiz_id', 'desc')
             ->get()
-            ->keyBy('quiz_id');
+            ->filter(function ($q) use ($myGroupIds, $user) {
+                $inMyGroup = $myGroupIds->contains((string) $q->group_id);
+                $isOwner = $q->Lecturer_id === $user->id;
+                $isAnnounced = (bool) $q->announced_at;
 
-        $quizzes = $quizzes->map(function ($quiz) use ($myAttempts) {
-            $quiz->myAttemptId = $myAttempts->has($quiz->quiz_id) ? $myAttempts[$quiz->quiz_id]->id : null;
-            return $quiz;
-        });
-
-        return view('quizzes.index', compact('quizzes'));
+                return $inMyGroup && ($isOwner || $isAnnounced);
+            })
+            ->values();
     }
+
+    $myAttempts = QuizAttempt::where('Student_id', $user->id)
+        ->get()
+        ->keyBy('quiz_id');
+
+    $quizzes = $quizzes->map(function ($quiz) use ($myAttempts) {
+        $quiz->myAttemptId = $myAttempts->has($quiz->quiz_id) ? $myAttempts[$quiz->quiz_id]->id : null;
+        return $quiz;
+    });
+
+    return view('quizzes.index', compact('quizzes'));
+}
 
     public function create()
     {
@@ -65,6 +71,7 @@ class QuizController extends Controller
             'Publish_time' => $data['start_time'],
             'Duration' => $data['duration_minutes'],
         ]);
+        \Illuminate\Support\Facades\Cache::forget('quiz_announced_' . $quiz->quiz_id);
 
         $lines = array_filter(array_map('trim', explode("\n", $data['raw_questions'])));
 
@@ -100,7 +107,7 @@ class QuizController extends Controller
             return view('quizzes.owner-view', compact('quiz'));
         }
 
-        if ($now->lt($quiz->start_time)) {
+        if ($now->lt($quiz->start_time->copy()->subSeconds(5))) {
             return redirect('/quizzes')->with('error', 'This quiz has not started yet.');
         }
 
@@ -269,31 +276,76 @@ class QuizController extends Controller
         return view('quizzes.submissions', compact('quiz', 'submissions'));
     }
 
-    public function upcomingCheck()
-    {
-        if (auth()->user()->role->value !== 'Student') {
-            return response()->json(['upcoming' => null]);
-        }
+ public function listCheck()
+{
+    $user = auth()->user();
 
-        $quiz = Quiz::all()
-            ->filter(function ($q) {
-                return $q->announced_at && now()->lt($q->start_time);
+    if ($user->role->value === 'Admin') {
+        $quizzes = Quiz::orderBy('quiz_id', 'desc')->get();
+    } else {
+        $myGroupIds = $user->groups()->pluck('groups.id')->map(fn ($id) => (string) $id);
+        $quizzes = Quiz::orderBy('quiz_id', 'desc')
+            ->get()
+            ->filter(function ($q) use ($myGroupIds, $user) {
+                $inMyGroup = $myGroupIds->contains((string) $q->group_id);
+                $isOwner = $q->Lecturer_id === $user->id;
+                $isAnnounced = (bool) $q->announced_at;
+
+                return $inMyGroup && ($isOwner || $isAnnounced);
             })
-            ->sortBy(fn ($q) => $q->start_time)
-            ->first();
-
-        if (!$quiz) {
-            return response()->json(['upcoming' => null]);
-        }
-
-        return response()->json([
-            'upcoming' => [
-                'id' => $quiz->quiz_id,
-                'title' => $quiz->title,
-                'seconds_until_start' => (int) now()->diffInSeconds($quiz->start_time, false),
-            ],
-        ]);
+            ->values();
     }
+
+    $myAttempts = QuizAttempt::where('Student_id', $user->id)
+        ->get()
+        ->keyBy('quiz_id');
+
+    $payload = $quizzes->map(function ($quiz) use ($myAttempts) {
+        return [
+            'id' => $quiz->quiz_id,
+            'title' => $quiz->title,
+            'group_name' => $quiz->group->name ?? 'Unknown group',
+            'start_time' => $quiz->start_time?->toIso8601String(),
+            'start_time_display' => $quiz->start_time?->format('d M H:i'),
+            'announced' => (bool) $quiz->announced_at,
+            'status' => $quiz->status,
+            'my_attempt_id' => $myAttempts->has($quiz->quiz_id) ? $myAttempts[$quiz->quiz_id]->id : null,
+        ];
+    })->values();
+
+    return response()->json(['quizzes' => $payload]);
+}
+public function upcomingCheck()
+{
+    $user = auth()->user();
+
+    if ($user->role->value !== 'student') {
+        return response()->json(['upcoming' => null]);
+    }
+
+    $myGroupIds = $user->groups()->pluck('groups.id')->map(fn ($id) => (string) $id);
+
+    $quiz = Quiz::all()
+        ->filter(function ($q) use ($myGroupIds) {
+            return $q->announced_at
+                && now()->lt($q->start_time)
+                && $myGroupIds->contains((string) $q->group_id);
+        })
+        ->sortBy(fn ($q) => $q->start_time)
+        ->first();
+
+    if (!$quiz) {
+        return response()->json(['upcoming' => null]);
+    }
+
+    return response()->json([
+        'upcoming' => [
+            'id' => $quiz->quiz_id,
+            'title' => $quiz->title,
+            'seconds_until_start' => (int) now()->diffInSeconds($quiz->start_time, false),
+        ],
+    ]);
+}
 
     public function announce($id)
     {

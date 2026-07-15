@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/quizzes', [QuizController::class, 'index']);
 Route::get('/quizzes/create', [QuizController::class, 'create']);
 Route::get('/quizzes/upcoming-check', [QuizController::class, 'upcomingCheck']);
+Route::get('/quizzes/list-check', [QuizController::class, 'listCheck']);
 Route::get('/quizzes/results/{submissionId}', [QuizController::class, 'results']);
 Route::post('/quizzes', [QuizController::class, 'store']);
 Route::get('/quizzes/{id}', [QuizController::class, 'show']);

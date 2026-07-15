@@ -95,6 +95,57 @@
                     tbody.prepend(row);
                 });
         });
-    </script>
+</script>
     @endif
+
+    <script>
+        // Polling fallback: refreshes the quiz list every 5s regardless of
+        // whether websockets/Reverb are working. This is what keeps the
+        // table in sync even if the Echo listener above never fires.
+        function pollQuizList() {
+            fetch('/quizzes/list-check')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('quizzesBody');
+                    const quizzes = data.quizzes || [];
+
+                    if (quizzes.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5">No quizzes yet.</td></tr>';
+                        return;
+                    }
+
+                    const emptyCell = tbody.querySelector('td[colspan="5"]');
+                    if (emptyCell) emptyCell.closest('tr').remove();
+
+                    quizzes.forEach(q => {
+                        let row = tbody.querySelector('tr[data-quiz-id="' + q.id + '"]');
+
+                        const titleCell = q.my_attempt_id
+                            ? '<a href="/quizzes/results/' + q.my_attempt_id + '">' + q.title + '</a>'
+                            : '<a href="/quizzes/' + q.id + '">' + q.title + '</a>';
+
+                        const statusLabel = q.announced
+                            ? 'Announced'
+                            : q.status.charAt(0).toUpperCase() + q.status.slice(1);
+
+                        if (!row) {
+                            row = document.createElement('tr');
+                            row.dataset.quizId = q.id;
+                            tbody.prepend(row);
+                        }
+
+                        row.innerHTML =
+                            '<td>' + titleCell + '</td>' +
+                            '<td>' + q.group_name + '</td>' +
+                            '<td>' + q.start_time_display + '</td>' +
+                            '<td><span class="status-pill">' + statusLabel + '</span></td>' +
+                            '<td class="quiz-actions">' + (q.my_attempt_id ? '<span class="sidebar-copy">Completed</span>' : '') + '</td>';
+                    });
+                })
+                .catch(() => {});
+        }
+
+        pollQuizList();
+        setInterval(pollQuizList, 5000);
+    </script>
 @endsection
