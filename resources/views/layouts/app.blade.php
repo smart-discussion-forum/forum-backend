@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Mindshare Discussion Forum')</title>
     <style>
         :root {
@@ -421,8 +422,7 @@
 <div class="navbar">
         @auth
             <div class="nav-links">
-                <a href="/dashboard">Dashboard</a>
-                <a href="/topics">Topics</a>
+               <a href="/dashboard">Dashboard</a>
                 <a href="/quizzes">Quiz</a>
                 <a href="/profile">Profile</a>
             </div>
@@ -441,13 +441,102 @@
         </div>
     @endauth
 </div>
-
-    <div class="screen-box @yield('box-style', 'wide')">
+<div class="screen-box @yield('box-style', 'wide')">
     @if(session('success'))
         <div class="success">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="error">{{ session('error') }}</div>
+    @endif
     @yield('content')
     </div>
+    @auth
+@if(auth()->user()->role->value === 'student')
+<div id="quizCountdownBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#4f7ca8,#2f5f84); color:#fff; text-align:center; padding:12px; font-weight:700;">
+    <span id="quizCountdownText"></span>
+</div>
+<script>
+    let quizRedirectTimer = null;
+    let quizPollTimer = null;
+    // Only show the countdown banner within this many seconds before start (30s)
+    const countdownWindowSeconds = 30;
+
+    function formatCountdown(totalSeconds) {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function redirectToQuiz(quizId) {
+        const targetPath = '/quizzes/' + quizId;
+        if (!window.location.pathname.startsWith(targetPath)) {
+            window.location.href = targetPath;
+        }
+    }
+
+    function checkUpcomingQuiz() {
+        fetch('/quizzes/upcoming-check')
+            .then(res => res.json())
+            .then(data => {
+                const banner = document.getElementById('quizCountdownBanner');
+                const text = document.getElementById('quizCountdownText');
+
+                if (!data.upcoming) {
+                    banner.style.display = 'none';
+                    if (quizRedirectTimer) {
+                        clearInterval(quizRedirectTimer);
+                        quizRedirectTimer = null;
+                    }
+                    return;
+                }
+
+                if (data.upcoming.phase === 'active') {
+                    const targetPath = '/quizzes/' + data.upcoming.id;
+                    // If already viewing the quiz page, don't show the banner
+                    if (window.location.pathname.startsWith(targetPath)) {
+                        banner.style.display = 'none';
+                        return;
+                    }
+
+                    banner.style.display = 'block';
+                    text.textContent = `"${data.upcoming.title}" is live now.`;
+                    redirectToQuiz(data.upcoming.id);
+                    return;
+                }
+
+                const seconds = data.upcoming.seconds_until_start;
+
+                if (seconds <= countdownWindowSeconds) {
+                    banner.style.display = 'block';
+                    let remaining = seconds;
+
+                    if (quizRedirectTimer) clearInterval(quizRedirectTimer);
+
+                    quizRedirectTimer = setInterval(() => {
+                        remaining--;
+                        text.textContent = `"${data.upcoming.title}" starts in ${formatCountdown(Math.max(0, remaining))}`;
+
+                        if (remaining <= 0) {
+                            clearInterval(quizRedirectTimer);
+                            quizRedirectTimer = null;
+                            redirectToQuiz(data.upcoming.id);
+                        }
+                    }, 1000);
+
+                    text.textContent = `"${data.upcoming.title}" starts in ${formatCountdown(remaining)}`;
+                } else {
+                    banner.style.display = 'none';
+                }
+            })
+            .catch(() => {});
+    }
+
+    checkUpcomingQuiz();
+    quizPollTimer = setInterval(checkUpcomingQuiz, 5000);
+</script>
+@endif
+@endauth
+    
     @stack('scripts')
 </body>
 </html>

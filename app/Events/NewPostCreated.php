@@ -23,7 +23,7 @@ class NewPostCreated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('private-group.'.$this->post->topic->group_id),
+            new PrivateChannel('group.'.$this->post->topic->group_id),
         ];
     }
 

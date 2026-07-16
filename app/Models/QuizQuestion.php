@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class QuizQuestion extends Model
 {
     protected $primaryKey = 'Question_id';
+
     protected $fillable = [
-        'Quiz_id',
+        'quiz_id',
         'Question',
         'Options',
         'Correct_answer',
@@ -17,9 +18,14 @@ class QuizQuestion extends Model
 
     public $timestamps = false;
 
-    // A question belongs to a quiz
     public function quiz()
     {
-        return $this->belongsTo(Quiz::class, 'Quiz_id');
+        return $this->belongsTo(Quiz::class, 'quiz_id', 'quiz_id');
+    }
+
+    public function getOptionsArrayAttribute()
+    {
+        $decoded = json_decode($this->attributes['Options'] ?? '[]', true);
+        return is_array($decoded) ? $decoded : [];
     }
 }
