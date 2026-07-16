@@ -18,10 +18,10 @@
             @error('password') <div class="error">{{ $message }}</div> @enderror
 
             <label>I am a:</label>
-            <select name="role">
+           <select name="role">
                 <option value="student">Student</option>
-                <option value="lecturer">Lecturer</option>
-                <option value="admin">Admin</option>
+                <option value="Lecturer">Lecturer</option>
+                <option value="Admin">Admin</option>
             </select>
 
             <label>Choose your groups:</label>
