@@ -16,6 +16,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/login', fn() => view('auth.login'))->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::get('/topics/{id}/export-pdf', [TopicController::class, 'exportPdf']);
+
 // Protected
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

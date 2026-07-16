@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-    <div class="screen-title">{{ $topic->title }}</div>
+    <div class="screen-title"><a href="{{ url('/topics/' . $topic->id . '/export-pdf') }}" class="btn" style="text-decoration:none; float:right;">Export as PDF</a>{{ $topic->title }}</div>
     <div class="panel">
         @forelse($posts as $post)
             <p><strong>{{ $post->user->name }}:</strong> {{ $post->content }}</p>

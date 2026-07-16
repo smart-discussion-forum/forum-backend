@@ -107,4 +107,18 @@ class TopicController extends Controller
 
         return back();
     }
+    public function exportPdf($id)
+{
+    $topic = Topic::findOrFail($id);
+    $posts = Post::where('topic_id', $id)->with('user')->orderBy('created_at')->get();
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('topics.export-pdf', [
+        'topic' => $topic,
+        'posts' => $posts,
+    ]);
+
+    $filename = 'topic-' . $id . '-' . now()->format('Y-m-d') . '.pdf';
+
+    return $pdf->download($filename);
+}
 }
