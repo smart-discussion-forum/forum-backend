@@ -2,16 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewPostCreated;
 use App\Models\Topic;
 use App\Models\Post;
-use App\Models\PostReaction;
+use App\Models\Group;
 use Illuminate\Http\Request;
 
 class TopicController extends Controller
 {
-    public function index()
+    private function assertMember($groupId)
     {
-        $topics = Topic::with('user')
+        if (! auth()->user()->groups()->where('groups.id', $groupId)->exists()) {
+            abort(403, 'You are not a member of this group.');
+        }
+    }
+
+    public function groupIndex($groupId)
+    {
+        $this->assertMember($groupId);
+
+        $group = Group::findOrFail($groupId);
+
+        $topics = Topic::with('creator')
+            ->where('group_id', $groupId)
             ->withCount('posts')
             ->latest()
             ->get();
@@ -24,91 +37,106 @@ class TopicController extends Controller
             ];
         });
 
-        return view('topics.index', compact('topicSummaries'));
+        return view('topics.group-index', compact('topicSummaries', 'group'));
     }
 
-    public function discussions()
+    public function groupCreate($groupId)
     {
-        $topics = Topic::with('user')->latest()->get();
-        $activeTopic = $topics->first();
-        $posts = $activeTopic ? $activeTopic->posts()->with('user')->withCount('reactions')->latest()->get() : collect();
-        $reactedPostIds = $posts->isNotEmpty()
-            ? PostReaction::where('user_id', auth()->id())->whereIn('post_id', $posts->pluck('id'))->pluck('post_id')->all()
-            : [];
+        $this->assertMember($groupId);
 
-        return view('discussions.index', compact('topics', 'activeTopic', 'posts', 'reactedPostIds'));
+        $group = Group::findOrFail($groupId);
+
+        return view('topics.group-create', compact('group'));
     }
 
-    public function create()
+    public function groupStore(Request $request, $groupId)
     {
-        return view('topics.create');
-    }
+        $this->assertMember($groupId);
 
-    public function store(Request $request)
-    {
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'nullable|string|max:100',
         ]);
 
         $topic = Topic::create([
-            'user_id' => auth()->id(),
+            'group_id' => $groupId,
+            'created_by' => auth()->id(),
             'title' => $data['title'],
             'category' => $data['category'] ?? null,
         ]);
 
-        return redirect('/topics/' . $topic->id);
+        return redirect('/groups/' . $groupId . '/topics/' . $topic->id);
     }
 
-    public function show($id)
+    public function groupShow($groupId, $id)
     {
-        $topic = Topic::with('user')->findOrFail($id);
-        $posts = $topic->posts()->with('user')->withCount('reactions')->latest()->get();
-        $reactedPostIds = $posts->isNotEmpty()
-            ? PostReaction::where('user_id', auth()->id())->whereIn('post_id', $posts->pluck('id'))->pluck('post_id')->all()
-            : [];
-        $topics = Topic::with('user')->latest()->get();
+        $this->assertMember($groupId);
 
-        return view('discussions.index', compact('topic', 'topics', 'posts', 'reactedPostIds'));
+        $group = Group::findOrFail($groupId);
+        $topic = Topic::with('creator')->where('group_id', $groupId)->findOrFail($id);
+        $posts = $topic->posts()->with('user')->orderBy('created_at', 'asc')->get();
+        $reactedPostIds = [];
+        $topics = Topic::with('creator')->where('group_id', $groupId)->latest()->get();
+
+        return view('discussions.group-show', compact('topic', 'topics', 'posts', 'reactedPostIds', 'group'));
     }
 
-    public function storePost(Request $request, $topicId)
+    public function groupStorePost(Request $request, $groupId, $topicId)
     {
+        $this->assertMember($groupId);
+
         $data = $request->validate([
             'content' => 'required|string',
         ]);
 
-        Post::create([
+        $topic = Topic::where('group_id', $groupId)->findOrFail($topicId);
+
+        // Ignore accidental double-submits of the same reply within a few seconds.
+        $existing = Post::where('topic_id', $topic->id)
+            ->where('user_id', auth()->id())
+            ->where('content', $data['content'])
+            ->where('created_at', '>=', now()->subSeconds(5))
+            ->latest('id')
+            ->first();
+
+        if ($existing) {
+            $existing->load('user:id,name', 'topic:id,group_id');
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'post' => $existing,
+                ]);
+            }
+
+            return redirect('/groups/' . $groupId . '/topics/' . $topicId);
+        }
+
+        $post = Post::create([
             'user_id' => auth()->id(),
-            'topic_id' => $topicId,
+            'topic_id' => $topic->id,
             'content' => $data['content'],
         ]);
 
-        return redirect('/discussions/' . $topicId);
-    }
+        $post->load('user:id,name', 'topic:id,group_id');
 
-    public function toggleReaction(Request $request, $topicId, $postId)
-    {
-        $post = Post::where('topic_id', $topicId)->findOrFail($postId);
-
-        $existingReaction = PostReaction::where('user_id', auth()->id())
-            ->where('post_id', $post->id)
-            ->first();
-
-        if ($existingReaction) {
-            $existingReaction->delete();
-        } else {
-            PostReaction::create([
-                'user_id' => auth()->id(),
-                'post_id' => $post->id,
-                'reaction_type' => 'like',
-            ]);
+        try {
+            broadcast(new NewPostCreated($post))->toOthers();
+        } catch (\Throwable $e) {
+            // Realtime is best-effort; saving the reply should still succeed.
         }
 
-        return back();
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'post' => $post,
+            ], 201);
+        }
+
+        return redirect('/groups/' . $groupId . '/topics/' . $topicId);
     }
     public function exportPdf($id)
-{
+    {
     $topic = Topic::findOrFail($id);
     $posts = Post::where('topic_id', $id)->with('user')->orderBy('created_at')->get();
 
@@ -120,5 +148,5 @@ class TopicController extends Controller
     $filename = 'topic-' . $id . '-' . now()->format('Y-m-d') . '.pdf';
 
     return $pdf->download($filename);
-}
+    }
 }

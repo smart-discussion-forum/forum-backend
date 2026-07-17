@@ -4,8 +4,7 @@
         <div class="screen-title" style="color:var(--text); margin-bottom:8px;">Profile</div>
         <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
             <a href="/dashboard" class="dash-btn">Dashboard</a>
-            <a href="/topics" class="dash-btn">Topics</a>
-            <a href="/discussions" class="dash-btn">Discussions</a>
+            <a href="/chat" class="dash-btn">Group Chat</a>
             <a href="/quizzes" class="dash-btn">Quizzes</a>
         </div>
 
