@@ -13,7 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureIsAdmin::class,
+            'lecturer' => \App\Http\Middleware\EnsureIsLecturer::class,
+            'student' => \App\Http\Middleware\EnsureIsStudent::class,
+            'not_blacklisted' => \App\Http\Middleware\EnsureNotBlacklisted::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
