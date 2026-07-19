@@ -399,6 +399,13 @@ public function upcomingCheck()
             \Illuminate\Support\Facades\Log::warning('Quiz announce broadcast failed: ' . $e->getMessage());
         }
 
+        // Quiz's Target_category stores a group id; notify that group's members.
+        if ($quiz->group) {
+            foreach ($quiz->group->members as $member) {
+                $member->notify(new \App\Notifications\QuizPublished($quiz));
+            }
+        }
+
         return back()->with('success', 'Quiz announced to students.');
     }
 
