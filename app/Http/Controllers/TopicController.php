@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\Group;
 use App\Notifications\NewTopicPosted;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TopicController extends Controller
 {
@@ -148,7 +149,10 @@ class TopicController extends Controller
         try {
             broadcast(new NewPostCreated($post))->toOthers();
         } catch (\Throwable $e) {
-            // Realtime is best-effort; saving the reply should still succeed.
+            Log::warning('Realtime topic post broadcast failed: ' . $e->getMessage(), [
+                'post_id' => $post->id,
+                'topic_id' => $topic->id,
+            ]);
         }
 
         if ($request->expectsJson()) {

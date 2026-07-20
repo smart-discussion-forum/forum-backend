@@ -1,0 +1,1 @@
+{"version":2,"defects":{"Tests\\Feature\\RealtimeBroadcastsTest::test_message_send_still_succeeds_when_broadcast_fails":8,"Tests\\Feature\\RealtimeBroadcastsTest::test_topic_post_still_succeeds_when_broadcast_fails":8},"times":{"Tests\\Unit\\ExampleTest::test_that_true_is_true":0.012,"Tests\\Feature\\ExampleTest::test_the_application_returns_a_successful_response":0.128}}
