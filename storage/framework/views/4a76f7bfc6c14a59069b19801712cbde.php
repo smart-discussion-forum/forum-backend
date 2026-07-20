@@ -1,0 +1,1 @@
+<?php /**PATH C:\Users\PILOT\Desktop\forum-backend\resources\views/topics/group-index.blade.php ENDPATH**/ ?>

@@ -43,7 +43,7 @@
 
     <?php $__empty_1 = true; $__currentLoopData = $posts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $post): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
         <div class="post">
-            <span class="post-author"><?php echo e($post->user->name); ?></span>
+            <span class="post-author"><?php echo e($post->user->name ?? 'Unknown user'); ?></span>
             <span class="post-date"><?php echo e($post->created_at->format('d M Y, H:i')); ?></span>
             <div class="post-content"><?php echo e($post->content); ?></div>
         </div>

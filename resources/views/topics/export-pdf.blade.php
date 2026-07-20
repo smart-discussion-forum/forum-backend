@@ -43,7 +43,7 @@
 
     @forelse ($posts as $post)
         <div class="post">
-            <span class="post-author">{{ $post->user->name }}</span>
+            <span class="post-author">{{ $post->user->name ?? 'Unknown user' }}</span>
             <span class="post-date">{{ $post->created_at->format('d M Y, H:i') }}</span>
             <div class="post-content">{{ $post->content }}</div>
         </div>

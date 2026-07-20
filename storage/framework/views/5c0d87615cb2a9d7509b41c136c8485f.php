@@ -1,14 +1,13 @@
-@extends('layouts.app')
-@section('content')
-    @php
+<?php $__env->startSection('content'); ?>
+    <?php
         $currentUserId = auth()->id();
-    @endphp
+    ?>
 
     <div class="page-card" style="max-width:1320px; margin:24px auto; padding:18px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
-            <div class="screen-title" style="margin:0; text-align:left; color:var(--text);">{{ $group->name }}</div>
-            <a href="/chat?group={{ $group->id }}" class="dash-btn">Back to Group Chat</a>
-            <a href="{{ url('/topics/' . $topic->id . '/export-pdf') }}" class="dash-btn">Export as PDF</a>
+            <div class="screen-title" style="margin:0; text-align:left; color:var(--text);"><?php echo e($group->name); ?></div>
+            <a href="/chat?group=<?php echo e($group->id); ?>" class="dash-btn">Back to Group Chat</a>
+            <a href="<?php echo e(url('/topics/' . $topic->id . '/export-pdf')); ?>" class="dash-btn">Export as PDF</a>
         </div>
         <div class="discussion-shell">
             <aside class="discussion-sidebar">
@@ -17,53 +16,58 @@
                         <div class="screen-title" style="margin-bottom:6px; text-align:left; color:var(--text);">Topics</div>
                         <div class="sidebar-copy">Open a topic thread to see the conversation.</div>
                     </div>
-                    <a href="/groups/{{ $group->id }}/topics/create" class="chat-btn">New topic</a>
+                    <a href="/groups/<?php echo e($group->id); ?>/topics/create" class="chat-btn">New topic</a>
                 </div>
 
                 <div class="topic-list">
-                    @forelse($topics as $topicItem)
-                        <a href="/groups/{{ $group->id }}/topics/{{ $topicItem->id }}" class="topic-card {{ $topic->id === $topicItem->id ? 'active' : '' }}">
-                            <div class="topic-card-title">{{ $topicItem->title }}</div>
+                    <?php $__empty_1 = true; $__currentLoopData = $topics; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $topicItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <a href="/groups/<?php echo e($group->id); ?>/topics/<?php echo e($topicItem->id); ?>" class="topic-card <?php echo e($topic->id === $topicItem->id ? 'active' : ''); ?>">
+                            <div class="topic-card-title"><?php echo e($topicItem->title); ?></div>
                             <div class="topic-card-meta">
-                                {{ $topicItem->creator?->name ?? 'Unknown author' }}
-                                @if($topicItem->category)
-                                    <span class="topic-dot">•</span>{{ $topicItem->category }}
-                                @endif
+                                <?php echo e($topicItem->creator?->name ?? 'Unknown author'); ?>
+
+                                <?php if($topicItem->category): ?>
+                                    <span class="topic-dot">•</span><?php echo e($topicItem->category); ?>
+
+                                <?php endif; ?>
                             </div>
                         </a>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <div class="empty-panel">No topics yet. Create the first discussion to get started.</div>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
             </aside>
 
             <section class="discussion-conversation">
                 <div class="conversation-header">
                     <div>
-                        <div class="conversation-title">{{ $topic->title }}</div>
+                        <div class="conversation-title"><?php echo e($topic->title); ?></div>
                         <div class="conversation-subtitle">
-                            Started by {{ $topic->creator?->name ?? 'Unknown author' }}
-                            @if($topic->category)
-                                <span class="topic-dot">•</span>{{ $topic->category }}
-                            @endif
+                            Started by <?php echo e($topic->creator?->name ?? 'Unknown author'); ?>
+
+                            <?php if($topic->category): ?>
+                                <span class="topic-dot">•</span><?php echo e($topic->category); ?>
+
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
 
                 <div class="chat-thread" id="chat-thread">
-                    @forelse($posts as $post)
-                        <div class="chat-row {{ $post->user_id === $currentUserId ? 'mine' : '' }}" data-post-id="{{ $post->id }}">
+                    <?php $__empty_1 = true; $__currentLoopData = $posts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $post): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <div class="chat-row <?php echo e($post->user_id === $currentUserId ? 'mine' : ''); ?>" data-post-id="<?php echo e($post->id); ?>">
                             <div class="chat-bubble">
-                                <div class="chat-meta">{{ $post->user_id === $currentUserId ? 'You' : ($post->user?->name ?? 'Unknown user') }}</div>
-                                <div class="chat-text">{{ $post->content }}</div>
+                                <div class="chat-meta"><?php echo e($post->user_id === $currentUserId ? 'You' : ($post->user?->name ?? 'Unknown user')); ?></div>
+                                <div class="chat-text"><?php echo e($post->content); ?></div>
                                 <div class="chat-time">
-                                    {{ optional($post->created_at)->format('M j, Y g:i A') ?? '' }}
+                                    <?php echo e(optional($post->created_at)->format('M j, Y g:i A') ?? ''); ?>
+
                                 </div>
                             </div>
                         </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <div class="empty-panel">No discussion yet. Be the first to reply.</div>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
 
                 <div class="reply-form">
@@ -81,12 +85,12 @@
     if (window.__topicThreadBound) return;
     window.__topicThreadBound = true;
 
-    const csrfToken = @json(csrf_token());
-    const token = @json(session('api_token'));
-    const authUserId = Number(@json(auth()->id()));
-    const currentGroupId = Number(@json($group->id));
-    const currentTopicId = Number(@json($topic->id));
-    const postIds = new Set(@json($posts->pluck('id')->values()));
+    const csrfToken = <?php echo json_encode(csrf_token(), 15, 512) ?>;
+    const token = <?php echo json_encode(session('api_token'), 15, 512) ?>;
+    const authUserId = Number(<?php echo json_encode(auth()->id(), 15, 512) ?>);
+    const currentGroupId = Number(<?php echo json_encode($group->id, 15, 512) ?>);
+    const currentTopicId = Number(<?php echo json_encode($topic->id, 15, 512) ?>);
+    const postIds = new Set(<?php echo json_encode($posts->pluck('id')->values(), 15, 512) ?>);
     const postsUrl = '/groups/' + currentGroupId + '/topics/' + currentTopicId + '/posts';
     const apiPostsUrl = '/api/topics/' + currentTopicId + '/posts';
 
@@ -203,11 +207,11 @@
             window.Pusher = Pusher;
             window.Echo = new Echo({
                 broadcaster: 'reverb',
-                key: @json(env('REVERB_APP_KEY')),
-                wsHost: @json(env('REVERB_HOST', 'localhost')),
-                wsPort: {{ env('REVERB_PORT', 8080) }},
-                wssPort: {{ env('REVERB_PORT', 8080) }},
-                forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
+                key: <?php echo json_encode(env('REVERB_APP_KEY'), 15, 512) ?>,
+                wsHost: <?php echo json_encode(env('REVERB_HOST', 'localhost'), 512) ?>,
+                wsPort: <?php echo e(env('REVERB_PORT', 8080)); ?>,
+                wssPort: <?php echo e(env('REVERB_PORT', 8080)); ?>,
+                forceTLS: <?php echo json_encode(env('REVERB_SCHEME', 'http') === 'https', 512) ?>,
                 enabledTransports: ['ws', 'wss'],
                 authEndpoint: '/broadcasting/auth',
                 auth: {
@@ -236,4 +240,6 @@
     document.body.appendChild(pusherScript);
 })();
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\PILOT\Desktop\forum-backend\resources\views/discussions/group-show.blade.php ENDPATH**/ ?>
