@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\Topic;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PostController extends Controller
 {
@@ -65,7 +66,14 @@ class PostController extends Controller
 
         $post->load('user:id,name', 'topic:id,group_id');
 
-        broadcast(new NewPostCreated($post))->toOthers();
+        try {
+            broadcast(new NewPostCreated($post))->toOthers();
+        } catch (\Throwable $e) {
+            Log::warning('Realtime topic post broadcast failed: ' . $e->getMessage(), [
+                'post_id' => $post->id,
+                'topic_id' => $topicId,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
