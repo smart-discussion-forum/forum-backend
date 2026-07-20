@@ -6,7 +6,9 @@ use App\Events\NewPostCreated;
 use App\Models\Topic;
 use App\Models\Post;
 use App\Models\Group;
+use App\Notifications\NewTopicPosted;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TopicController extends Controller
 {
@@ -40,6 +42,24 @@ class TopicController extends Controller
         return view('topics.group-index', compact('topicSummaries', 'group'));
     }
 
+    public function index(Request $request, $id = null)
+    {
+        $topics = Topic::with('user')->withCount('posts')->latest()->get();
+
+        $selectedTopicId = $id ?? $request->query('topic');
+        $topic = null;
+        $posts = collect();
+
+        if ($selectedTopicId) {
+            $topic = Topic::with('user')->find($selectedTopicId);
+            if ($topic) {
+                $posts = $topic->posts()->with('user')->latest()->get();
+            }
+        }
+
+        return view('discussions.index', compact('topics', 'topic', 'posts'));
+    }
+
     public function groupCreate($groupId)
     {
         $this->assertMember($groupId);
@@ -64,6 +84,12 @@ class TopicController extends Controller
             'title' => $data['title'],
             'category' => $data['category'] ?? null,
         ]);
+
+        foreach ($topic->group->members as $member) {
+            if ($member->id !== auth()->id()) {
+                $member->notify(new NewTopicPosted($topic));
+            }
+        }
 
         return redirect('/groups/' . $groupId . '/topics/' . $topic->id);
     }
@@ -123,7 +149,10 @@ class TopicController extends Controller
         try {
             broadcast(new NewPostCreated($post))->toOthers();
         } catch (\Throwable $e) {
-            // Realtime is best-effort; saving the reply should still succeed.
+            Log::warning('Realtime topic post broadcast failed: ' . $e->getMessage(), [
+                'post_id' => $post->id,
+                'topic_id' => $topic->id,
+            ]);
         }
 
         if ($request->expectsJson()) {

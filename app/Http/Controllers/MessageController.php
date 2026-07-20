@@ -6,6 +6,7 @@ use App\Events\MessageSent;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
 {
@@ -30,7 +31,14 @@ class MessageController extends Controller
         ]);
         $message->load('sender');
 
-        broadcast(new MessageSent($message))->toOthers();
+        try {
+            broadcast(new MessageSent($message))->toOthers();
+        } catch (\Throwable $e) {
+            Log::warning('Realtime chat broadcast failed: ' . $e->getMessage(), [
+                'message_id' => $message->id,
+                'group_id' => $request->group_id,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
