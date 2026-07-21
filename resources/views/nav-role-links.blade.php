@@ -10,6 +10,10 @@
 --}}
 
 @auth
+    <a href="{{ route('recommendations.index') }}"
+       class="text-gray-700 hover:text-indigo-600 {{ request()->routeIs('recommendations.index') ? 'font-semibold' : '' }}">
+        {{ __('Recommended') }}
+    </a>
     @if (auth()->user()->role === 'admin')
         <a href="{{ route('groups.statistics', 1) }}"
            class="text-gray-700 hover:text-indigo-600 {{ request()->routeIs('groups.statistics') ? 'font-semibold' : '' }}">
