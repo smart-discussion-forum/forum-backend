@@ -8,6 +8,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\RecommendationController;
+use App\Http\Controllers\AdminUserController;
 
 // Public
 Route::get('/', fn() => view('welcome'));
@@ -63,4 +64,10 @@ Route::put('/quizzes/{id}', [QuizController::class, 'update']);
 Route::get('/quizzes/{id}/submissions', [QuizController::class, 'submissions']);
 Route::post('/quizzes/{id}/submit', [QuizController::class, 'submit']);
 Route::post('/quizzes/{id}/announce', [QuizController::class, 'announce']);
+
+    // Admin: user management (warnings / blacklist)
+    Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index')->middleware('admin');
+    Route::post('/admin/users/{user}/warn', [AdminUserController::class, 'warn'])->name('admin.users.warn')->middleware('admin');
+    Route::post('/admin/users/{user}/blacklist', [AdminUserController::class, 'blacklist'])->name('admin.users.blacklist')->middleware('admin');
+    Route::post('/admin/users/{user}/reinstate', [AdminUserController::class, 'reinstate'])->name('admin.users.reinstate')->middleware('admin');
 });
