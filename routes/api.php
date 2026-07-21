@@ -18,7 +18,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/messages/send', [MessageController::class, 'send']);
     Route::get('/messages/group/{groupId}', [MessageController::class, 'getMessages']);
 
-    // Quiz attempts
+    // Groups (my groups)
+    Route::get('/groups', function (Request $request) {
+        return response()->json($request->user()->groups()->orderBy('name')->get());
+    });
+
+    //Quizzes
+    Route::get('/quizzes', [\App\Http\Controllers\QuizController::class, 'listCheck']);
+    Route::get('/quizzes/{id}/questions', function ($id) {
+    $quiz = \App\Models\Quiz::with('questions')->findOrFail($id);
+    return response()->json($quiz->questions);
+    });
     Route::post('/quiz/{id}/attempt', [QuizAttemptController::class, 'startAttempt']);
     Route::post('/quiz/attempt/{attemptId}/answer', [QuizAttemptController::class, 'submitAnswer']);
     Route::post('/quiz/attempt/{attemptId}/submit', [QuizAttemptController::class, 'submitFullAttempt']);
