@@ -29,6 +29,7 @@
 
     <h3 style="color:var(--text); font-weight:600; font-size:1.125rem; margin-bottom:12px;">Admin actions</h3>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px;">
+        <a href="{{ route('admin.users.index') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Manage Users</a>
         <a href="{{ route('chat') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Group Chat</a>
         <a href="{{ route('groups.statistics', 1) }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">View group statistics</a>
         <a href="{{ route('groups.manage') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Manage groups</a>
