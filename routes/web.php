@@ -7,7 +7,6 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\GroupController;
 use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\AdminUserController;
 
