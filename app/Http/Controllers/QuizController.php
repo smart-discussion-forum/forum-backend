@@ -402,6 +402,52 @@ public function upcomingCheck()
         return back()->with('success', 'Quiz announced to students.');
     }
 
+    public function apiStore(Request $request)
+{
+    $data = $request->validate([
+        'title' => 'required|string|max:150',
+        'group_id' => 'required|integer|exists:groups,id',
+        'start_time' => 'required|date',
+        'duration_minutes' => 'required|integer|min:1',
+        'questions' => 'required|array|min:1',
+        'questions.*.question' => 'required|string',
+        'questions.*.options' => 'required|array|min:2',
+        'questions.*.options.*' => 'required|string',
+        'questions.*.correct_option' => 'required|integer|min:0',
+        'questions.*.marks' => 'required|integer|min:1',
+    ]);
+
+    $isMember = auth()->user()->groups()
+    ->where('groups.id', $data['group_id'])->exists();
+
+    if (!$isMember) {
+        return response()->json(['message' => 'You can only create quizzes for groups you belong to.'], 403);
+    }
+
+    $quiz = Quiz::create([
+        'Lecturer_id' => auth()->id(),
+        'Title' => $data['title'],
+        'Target_category' => $data['group_id'],
+        'Publish_time' => $data['start_time'],
+        'Duration' => $data['duration_minutes'],
+        'announced_at' => null,
+        ]);
+
+    foreach ($data['questions'] as $questionData) {
+        QuizQuestion::create([
+            'quiz_id' => $quiz->quiz_id,
+            'Question' => $questionData['question'],
+            'Options' => json_encode(array_values($questionData['options'])),
+            'Correct_answer' => (string) $questionData['correct_option'],
+            'Marks' => (int) $questionData['marks'],
+        ]);
+    }
+        
+    return response()->json([
+        'message' => 'Quiz created successfully.',
+        'quiz' => $quiz->load('questions'),],201);
+}
+
     public function results($submissionId)
     {
         $attempt = QuizAttempt::with(['quiz.questions', 'answers.question'])->findOrFail($submissionId);
@@ -437,3 +483,4 @@ public function upcomingCheck()
         return view('quizzes.results', compact('submission', 'quiz', 'grade', 'feedback', 'breakdown'));
     }
 }
+

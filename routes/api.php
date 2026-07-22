@@ -29,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     $quiz = \App\Models\Quiz::with('questions')->findOrFail($id);
     return response()->json($quiz->questions);
     });
+    Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/quizzes',[\App\Http\Controllers\QuizController::class, 'apiStore']);
+});
     Route::post('/quiz/{id}/attempt', [QuizAttemptController::class, 'startAttempt']);
     Route::post('/quiz/attempt/{attemptId}/answer', [QuizAttemptController::class, 'submitAnswer']);
     Route::post('/quiz/attempt/{attemptId}/submit', [QuizAttemptController::class, 'submitFullAttempt']);
