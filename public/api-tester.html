@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MindShare API Tester</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#151b23; --border:#2a323d; --text:#e6edf3;
+    --muted:#8b98a5; --accent:#4f8cff; --accent-dim:#1d3a66;
+    --ok:#3fb950; --err:#f85149; --mono:'SF Mono',Consolas,'Courier New',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,Segoe UI,Roboto,sans-serif; padding:24px;
+  }
+  h1{font-size:20px; margin:0 0 4px;}
+  .sub{color:var(--muted); font-size:13px; margin-bottom:20px;}
+  .topbar{
+    display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:14px; margin-bottom:20px;
+  }
+  .topbar label{font-size:12px; color:var(--muted); display:block; margin-bottom:4px;}
+  .topbar input{
+    background:#0a0e14; border:1px solid var(--border); color:var(--text);
+    padding:7px 9px; border-radius:6px; font-size:13px; width:220px;
+  }
+  .token-pill{
+    font-family:var(--mono); font-size:11px; color:var(--ok);
+    background:#0a1f0f; border:1px solid #1e4620; padding:6px 10px;
+    border-radius:6px; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .token-pill.empty{color:var(--muted); background:#1a1f26; border-color:var(--border);}
+  button{
+    background:var(--accent-dim); color:#cfe0ff; border:1px solid var(--accent);
+    padding:8px 14px; border-radius:6px; font-size:13px; cursor:pointer; font-weight:500;
+  }
+  button:hover{background:var(--accent);}
+  button.small{padding:5px 10px; font-size:12px;}
+  button.danger{background:#3a1616; border-color:#7a2a2a; color:#ffb3b3;}
+  button.danger:hover{background:#5a2020;}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:16px; margin-bottom:16px;
+  }
+  .card h2{
+    font-size:14px; margin:0 0 3px; display:flex; align-items:center; gap:8px;
+  }
+  .card .desc{font-size:12px; color:var(--muted); margin-bottom:12px; line-height:1.5;}
+  .method{
+    font-family:var(--mono); font-size:10px; font-weight:700; padding:2px 6px;
+    border-radius:4px; letter-spacing:.5px;
+  }
+  .method.GET{background:#123a24; color:#4fd97f;}
+  .method.POST{background:#1c2f52; color:#6fa8ff;}
+  .row{display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;}
+  .row input, .row select, .row textarea{
+    background:#0a0e14; border:1px solid var(--border); color:var(--text);
+    padding:7px 9px; border-radius:6px; font-size:13px; flex:1; min-width:120px;
+    font-family:var(--mono);
+  }
+  .row textarea{resize:vertical; min-height:50px;}
+  .field-label{font-size:11px; color:var(--muted); margin-bottom:3px; display:block;}
+  .field{flex:1; min-width:140px;}
+  .actions{display:flex; gap:8px; align-items:center; margin-top:6px;}
+  pre.resp{
+    background:#0a0e14; border:1px solid var(--border); border-radius:6px;
+    padding:10px; font-size:12px; font-family:var(--mono); white-space:pre-wrap;
+    word-break:break-all; max-height:220px; overflow:auto; margin:10px 0 0;
+    display:none;
+  }
+  pre.resp.show{display:block;}
+  .status{font-size:11px; font-family:var(--mono); margin-top:4px; display:none;}
+  .status.show{display:inline-block;}
+  .status.ok{color:var(--ok);}
+  .status.err{color:var(--err);}
+  .section-title{
+    margin:28px 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--muted); border-bottom:1px solid var(--border); padding-bottom:6px;
+  }
+  .hint{font-size:11px; color:var(--muted); margin-top:6px; font-style:italic;}
+</style>
+</head>
+<body>
+
+<h1>MindShare API Tester</h1>
+<div class="sub">Manual test console for the moderation / groups / DM / notification endpoints. Save this file into your <code>public/</code> folder and open it via your running Laravel server (e.g. <code>http://127.0.0.1:8000/api-tester.html</code>) so requests are same-origin.</div>
+
+<div class="topbar">
+  <div>
+    <label>Base URL</label>
+    <input id="baseUrl" value="http://127.0.0.1:8000" style="width:200px">
+  </div>
+  <div>
+    <label>Email</label>
+    <input id="loginEmail" placeholder="you@example.com">
+  </div>
+  <div>
+    <label>Password</label>
+    <input id="loginPassword" type="password" placeholder="password">
+  </div>
+  <div style="align-self:flex-end;">
+    <button onclick="login()">Log in</button>
+  </div>
+  <div style="align-self:flex-end;">
+    <span id="tokenPill" class="token-pill empty">no token yet</span>
+  </div>
+  <div style="align-self:flex-end;">
+    <button class="small danger" onclick="clearToken()">Clear token</button>
+  </div>
+</div>
+<div id="loginStatus" class="status"></div>
+
+<div class="section-title">Warnings &amp; Blacklist</div>
+<div class="grid">
+
+  <div class="card">
+    <h2><span class="method POST">POST</span> /api/warnings — issue a warning</h2>
+    <div class="desc">Lecturer/Admin only. Issuing 2 (config default) manual warnings to the same user auto-blacklists them.</div>
+    <div class="row">
+      <div class="field"><span class="field-label">user_id</span><input id="warn_user_id" placeholder="5"></div>
+      <div class="field"><span class="field-label">reason</span><input id="warn_reason" placeholder="Spamming the forum"></div>
+    </div>
+    <div class="actions"><button onclick="issueWarning()">Send</button></div>
+    <pre class="resp" id="warn_resp"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="method GET">GET</span> /api/warnings — list warnings</h2>
+    <div class="desc">Leave user_id blank to see your own. Staff can view anyone's.</div>
+    <div class="row">
+      <div class="field"><span class="field-label">user_id (optional)</span><input id="listwarn_user_id"></div>
+      <div class="field"><span class="field-label">source (optional)</span>
+        <select id="listwarn_source">
+          <option value="">any</option>
+          <option value="manual">manual</option>
+          <option value="auto_inactivity">auto_inactivity</option>
+        </select>
+      </div>
+    </div>
+    <div class="actions"><button onclick="listWarnings()">Fetch</button></div>
+    <pre class="resp" id="listwarn_resp"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="method GET">GET</span> /api/blacklist — active entries</h2>
+    <div class="desc">Lecturer/Admin only.</div>
+    <div class="actions"><button onclick="listBlacklist()">Fetch</button></div>
+    <pre class="resp" id="blacklist_resp"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="method POST">POST</span> /api/blacklist/{id}/lift</h2>
+    <div class="desc">Admin only. Reinstates the user immediately.</div>
+    <div class="row">
+      <div class="field"><span class="field-label">blacklist_id</span><input id="lift_id" placeholder="1"></div>
+    </div>
+    <div class="actions"><button onclick="liftBlacklist()">Lift</button></div>
+    <pre class="resp" id="lift_resp"></pre>
+  </div>
+
+</div>
+
+<div class="section-title">Direct Messages</div>
+<div class="grid">
+
+  <div class="card">
+    <h2><span class="method POST">POST</span> /api/direct-messages/send</h2>
+    <div class="row">
+      <div class="field"><span class="field-label">receiver_id</span><input id="dm_receiver" placeholder="3"></div>
+      <div class="field"><span class="field-label">message</span><input id="dm_message" placeholder="hey there"></div>
+    </div>
+    <div class="actions"><button onclick="sendDM()">Send</button></div>
+    <pre class="resp" id="dm_resp"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="method GET">GET</span> /api/direct-messages/{userId}</h2>
+    <div class="desc">Full thread with that user, chronological.</div>
+    <div class="row">
+      <div class="field"><span class="field-label">user_id</span><input id="dmconvo_user" placeholder="3"></div>
+    </div>
+    <div class="actions"><button onclick="getConversation()">Fetch</button></div>
+    <pre class="resp" id="dmconvo_resp"></pre>
+  </div>
+
+</div>
+
+<div class="section-title">Notifications</div>
+<div class="grid">
+
+  <div class="card">
+    <h2><span class="method GET">GET</span> /api/notifications</h2>
+    <div class="row">
+      <div class="field" style="flex:0 0 auto;">
+        <span class="field-label">&nbsp;</span>
+        <label style="font-size:12px;"><input type="checkbox" id="unread_only" style="width:auto;"> unread only</label>
+      </div>
+    </div>
+    <div class="actions"><button onclick="listNotifications()">Fetch</button></div>
+    <pre class="resp" id="notif_resp"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="method POST">POST</span> /api/notifications/{id}/read &nbsp;|&nbsp; read-all</h2>
+    <div class="row">
+      <div class="field"><span class="field-label">notification id (for single)</span><input id="notif_id" placeholder="uuid"></div>
+    </div>
+    <div class="actions">
+      <button onclick="markRead()">Mark one read</button>
+      <button onclick="markAllRead()">Mark all read</button>
+    </div>
+    <pre class="resp" id="notifread_resp"></pre>
+  </div>
+
+</div>
+
+<div class="section-title">Groups</div>
+<div class="grid">
+
+  <div class="card">
+    <h2><span class="method POST">POST</span> /groups — create</h2>
+    <div class="desc">Uses session/blade routes (not /api). Only works once you're logged in via a real browser session — from this page, expect a redirect response rather than JSON unless you add an Accept: application/json header, which this tester does automatically.</div>
+    <div class="row">
+      <div class="field"><span class="field-label">name</span><input id="grp_name" placeholder="Web Dev Squad"></div>
+      <div class="field"><span class="field-label">description</span><input id="grp_desc" placeholder="optional"></div>
+    </div>
+    <div class="actions"><button onclick="createGroup()">Create</button></div>
+    <pre class="resp" id="grp_resp"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="method GET">GET</span> /groups/{id} — show</h2>
+    <div class="row">
+      <div class="field"><span class="field-label">group_id</span><input id="grpshow_id" placeholder="1"></div>
+    </div>
+    <div class="actions"><button onclick="showGroup()">Fetch</button></div>
+    <pre class="resp" id="grpshow_resp"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="method POST">POST</span> /groups/{id}/join &nbsp;|&nbsp; /leave</h2>
+    <div class="row">
+      <div class="field"><span class="field-label">group_id</span><input id="grpjoin_id" placeholder="1"></div>
+    </div>
+    <div class="actions">
+      <button onclick="joinGroup()">Join</button>
+      <button onclick="leaveGroup()">Leave</button>
+    </div>
+    <pre class="resp" id="grpjoin_resp"></pre>
+  </div>
+
+</div>
+
+<div class="hint">
+  Note on the <code>not_blacklisted</code> middleware: if you blacklist the account you're currently testing with, its next post/message/DM call will start returning 403 automatically — that's the middleware working correctly, not a bug in this page.
+</div>
+
+<script>
+let token = localStorage.getItem('ms_token') || '';
+updateTokenPill();
+
+function base(){ return document.getElementById('baseUrl').value.replace(/\/$/,''); }
+
+function updateTokenPill(){
+  const pill = document.getElementById('tokenPill');
+  if (token) {
+    pill.textContent = token.slice(0,10) + '...' + token.slice(-6);
+    pill.classList.remove('empty');
+  } else {
+    pill.textContent = 'no token yet';
+    pill.classList.add('empty');
+  }
+}
+
+function clearToken(){
+  token = '';
+  localStorage.removeItem('ms_token');
+  updateTokenPill();
+}
+
+function getCookie(name){
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+async function ensureCsrfCookie(){
+  if (!getCookie('XSRF-TOKEN')) {
+    await fetch(base() + '/sanctum/csrf-cookie', { credentials: 'include' });
+  }
+}
+
+async function api(path, { method='GET', body=null, formEncoded=false } = {}){
+  const headers = { 'Accept': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (method !== 'GET') {
+    await ensureCsrfCookie();
+    const xsrf = getCookie('XSRF-TOKEN');
+    if (xsrf) headers['X-XSRF-TOKEN'] = xsrf;
+  }
+  let fetchBody = null;
+  if (body !== null) {
+    headers['Content-Type'] = 'application/json';
+    fetchBody = JSON.stringify(body);
+  }
+  const res = await fetch(base() + path, { method, headers, body: fetchBody, credentials: 'include' });
+  let data;
+  const text = await res.text();
+  try { data = JSON.parse(text); } catch(e) { data = text; }
+  return { status: res.status, ok: res.ok, data };
+}
+
+function render(elId, result){
+  const el = document.getElementById(elId);
+  el.classList.add('show');
+  el.textContent = `HTTP ${result.status}\n` + (typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2));
+  el.style.borderColor = result.ok ? '#1e4620' : '#5a2020';
+}
+
+async function login(){
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const statusEl = document.getElementById('loginStatus');
+  statusEl.classList.remove('show','ok','err');
+  try {
+    const r = await api('/api/login', { method:'POST', body:{ email, password } });
+    if (r.ok && r.data.token) {
+      token = r.data.token;
+      localStorage.setItem('ms_token', token);
+      updateTokenPill();
+      statusEl.textContent = `Logged in as ${r.data.user?.name ?? email}`;
+      statusEl.className = 'status show ok';
+    } else {
+      statusEl.textContent = 'Login failed: ' + JSON.stringify(r.data);
+      statusEl.className = 'status show err';
+    }
+  } catch(e){
+    statusEl.textContent = 'Network error: ' + e.message;
+    statusEl.className = 'status show err';
+  }
+}
+
+// --- Warnings & blacklist ---
+async function issueWarning(){
+  const user_id = document.getElementById('warn_user_id').value;
+  const reason = document.getElementById('warn_reason').value;
+  render('warn_resp', await api('/api/warnings', { method:'POST', body:{ user_id: Number(user_id), reason } }));
+}
+async function listWarnings(){
+  const uid = document.getElementById('listwarn_user_id').value;
+  const source = document.getElementById('listwarn_source').value;
+  const params = new URLSearchParams();
+  if (uid) params.set('user_id', uid);
+  if (source) params.set('source', source);
+  const qs = params.toString() ? '?' + params.toString() : '';
+  render('listwarn_resp', await api('/api/warnings' + qs));
+}
+async function listBlacklist(){
+  render('blacklist_resp', await api('/api/blacklist'));
+}
+async function liftBlacklist(){
+  const id = document.getElementById('lift_id').value;
+  render('lift_resp', await api(`/api/blacklist/${id}/lift`, { method:'POST' }));
+}
+
+// --- Direct messages ---
+async function sendDM(){
+  const receiver_id = document.getElementById('dm_receiver').value;
+  const message = document.getElementById('dm_message').value;
+  render('dm_resp', await api('/api/direct-messages/send', { method:'POST', body:{ receiver_id: Number(receiver_id), message } }));
+}
+async function getConversation(){
+  const uid = document.getElementById('dmconvo_user').value;
+  render('dmconvo_resp', await api(`/api/direct-messages/${uid}`));
+}
+
+// --- Notifications ---
+async function listNotifications(){
+  const unreadOnly = document.getElementById('unread_only').checked;
+  const qs = unreadOnly ? '?unread_only=1' : '';
+  render('notif_resp', await api('/api/notifications' + qs));
+}
+async function markRead(){
+  const id = document.getElementById('notif_id').value;
+  render('notifread_resp', await api(`/api/notifications/${id}/read`, { method:'POST' }));
+}
+async function markAllRead(){
+  render('notifread_resp', await api('/api/notifications/read-all', { method:'POST' }));
+}
+
+// --- Groups (session/web routes, not /api) ---
+async function createGroup(){
+  try {
+    const name = document.getElementById('grp_name').value;
+    const description = document.getElementById('grp_desc').value;
+    render('grp_resp', await api('/groups', { method:'POST', body:{ name, description } }));
+  } catch(e) { render('grp_resp', { status:'—', ok:false, data: 'Request failed: ' + e.message + ' (are you accessing this page via http://127.0.0.1:8000/api-tester.html, not a file:// path?)' }); }
+}
+async function showGroup(){
+  try {
+    const id = document.getElementById('grpshow_id').value;
+    render('grpshow_resp', await api(`/groups/${id}`));
+  } catch(e) { render('grpshow_resp', { status:'—', ok:false, data: 'Request failed: ' + e.message }); }
+}
+async function joinGroup(){
+  try {
+    const id = document.getElementById('grpjoin_id').value;
+    render('grpjoin_resp', await api(`/groups/${id}/join`, { method:'POST' }));
+  } catch(e) { render('grpjoin_resp', { status:'—', ok:false, data: 'Request failed: ' + e.message }); }
+}
+async function leaveGroup(){
+  try {
+    const id = document.getElementById('grpjoin_id').value;
+    render('grpjoin_resp', await api(`/groups/${id}/leave`, { method:'POST' }));
+  } catch(e) { render('grpjoin_resp', { status:'—', ok:false, data: 'Request failed: ' + e.message }); }
+}
+</script>
+
+</body>
+</html>

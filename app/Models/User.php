@@ -50,4 +50,14 @@ class User extends Authenticatable
 {
     return $this->hasMany(Message::class,'sender_id');
 }
+
+    public function warnings()
+    {
+        return $this->hasMany(Warning::class, 'User_id');
+    }
+
+    public function blacklistEntries()
+    {
+        return $this->hasMany(Blacklist::class, 'User_id');
+    }
 }
