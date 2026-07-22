@@ -32,6 +32,7 @@
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px;">
         <a href="{{ route('chat') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Open chat</a>
         <a href="{{ route('quizzes.index') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">My quizzes</a>
+        <a href="{{ route('recommendations.index') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Recommended topics</a>
     </div>
 
 </div>

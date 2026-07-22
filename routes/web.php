@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\RecommendationController;
+use App\Http\Controllers\AdminUserController;
 
 // Public
 Route::get('/', fn() => view('welcome'));
@@ -22,10 +24,12 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/recommendations', [RecommendationController::class, 'index'])->name('recommendations.index');
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/profile/password', [AuthController::class, 'updatePassword']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
+    Route::get('/recommendations', [RecommendationController::class, 'index'])->name('recommendations.index');
     // Groups
 // Groups
 Route::get('/groups/manage', [GroupController::class, 'manage'])->name('groups.manage')->middleware('lecturer');
@@ -60,4 +64,10 @@ Route::put('/quizzes/{id}', [QuizController::class, 'update']);
 Route::get('/quizzes/{id}/submissions', [QuizController::class, 'submissions']);
 Route::post('/quizzes/{id}/submit', [QuizController::class, 'submit']);
 Route::post('/quizzes/{id}/announce', [QuizController::class, 'announce']);
+
+    // Admin: user management (warnings / blacklist)
+    Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index')->middleware('admin');
+    Route::post('/admin/users/{user}/warn', [AdminUserController::class, 'warn'])->name('admin.users.warn')->middleware('admin');
+    Route::post('/admin/users/{user}/blacklist', [AdminUserController::class, 'blacklist'])->name('admin.users.blacklist')->middleware('admin');
+    Route::post('/admin/users/{user}/reinstate', [AdminUserController::class, 'reinstate'])->name('admin.users.reinstate')->middleware('admin');
 });

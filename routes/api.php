@@ -9,6 +9,7 @@ use App\Http\Controllers\WarningController;
 use App\Http\Controllers\BlacklistController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DirectMessageController;
+use App\Http\Controllers\RecommendationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+
+    // Recommendations
+    Route::get('/recommendations', [RecommendationController::class, 'apiIndex']);
 
     // Quiz attempts
     Route::post('/quiz/{id}/attempt', [QuizAttemptController::class, 'startAttempt']);

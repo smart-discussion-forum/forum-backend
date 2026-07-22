@@ -22,9 +22,7 @@ class DashboardController extends Controller
         RoleEnum::Lecturer => view('dashboard.lecturer', [
             'myGroups' => Group::where('created_by', $user->id)->get(),
         ]),
-        default => view('dashboard.student', [
-            'myGroups' => Group::all(),
-        ]),
+        default => view('dashboard'),
     };
 }
 }
