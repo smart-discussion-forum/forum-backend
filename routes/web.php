@@ -1,10 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\TopicController;
-use App\Http\Controllers\QuizController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\QuizController;
+use App\Http\Controllers\TopicController;
+use Illuminate\Support\Facades\Route;
 
 // Public
 Route::get('/', fn() => view('welcome'));
@@ -24,6 +25,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/profile/password', [AuthController::class, 'updatePassword']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
+
+    Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+    Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
+    Route::post('/groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
+    Route::post('/groups/{group}/leave', [GroupController::class, 'leave'])->name('groups.leave');
 
 // Topics, now scoped under a group's chat
     Route::get('/groups/{groupId}/topics', [TopicController::class, 'groupIndex']);

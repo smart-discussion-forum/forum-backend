@@ -27,12 +27,15 @@
         </div>
             <div id="messages" style="height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:15px; margin-bottom:15px;">
             </div>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="message-input" placeholder="Type a message..."
-                    style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-1); color:white;"
-                    disabled>
-                <button onclick="sendMessage()" class="btn" id="send-btn" disabled>Send</button>
-            </div>
+           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <input type="text" id="message-input" placeholder="Type a message..."
+        style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-1); color:white;" disabled>
+    <select id="exclude-select" style="padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--bg-1); color:white; font-size:12px; max-width:120px;" disabled>
+        <option value="">Exclude member</option>
+    </select>
+    
+    <button onclick="sendMessage()" class="btn" id="send-btn" disabled>Send</button>
+</div>
         </div>
     </div>
 </div>
@@ -44,7 +47,10 @@
 <script>
 const authUserId = Number(<?php echo json_encode(auth()->id(), 15, 512) ?>);
 const token = <?php echo json_encode(session('api_token'), 15, 512) ?>;
+const groupsData = <?php echo json_encode($groupsData, 15, 512) ?>;
 let currentGroupId = null;
+let currentGroupMembers = [];
+let selectedExcludedUserId = null;
 let echoChannel = null;
 const messageIds = new Set();
 let pollingTimer = null;
@@ -96,6 +102,11 @@ function appendMessage(msg) {
         return;
     }
 
+    const excludedIds = Array.isArray(msg.excluded_user_ids) ? msg.excluded_user_ids : [];
+    if (excludedIds.includes(authUserId)) {
+        return;
+    }
+
     messageIds.add(msg.id);
     const container = document.getElementById('messages');
     container.insertAdjacentHTML('beforeend', renderMessage(msg));
@@ -133,11 +144,39 @@ function subscribeToGroup(groupId) {
         });
 }
 
+function populateMemberOptions(groupId) {
+    const select = document.getElementById('exclude-select');
+    select.innerHTML = '<option value="">Exclude member</option>';
+    select.disabled = true;
+
+    const group = groupsData.find(item => Number(item.id) === Number(groupId));
+    currentGroupMembers = group?.members || [];
+
+    const members = currentGroupMembers.filter(member => Number(member.id) !== authUserId);
+    members.forEach(member => {
+        const option = document.createElement('option');
+        option.value = String(member.id);
+        option.textContent = member.name;
+        select.appendChild(option);
+    });
+
+    select.disabled = false;
+}
+
+ document.getElementById('exclude-select').addEventListener('change', function (event) {
+    selectedExcludedUserId = event.target.value || null;
+});
+
 function openGroup(groupId, groupName) {
     currentGroupId = groupId;
+    currentGroupMembers = [];
     document.getElementById('chat-header').innerText = groupName;
     document.getElementById('message-input').disabled = false;
     document.getElementById('send-btn').disabled = false;
+    const excludeSelect = document.getElementById('exclude-select');
+    selectedExcludedUserId = null;
+    excludeSelect.value = '';
+    excludeSelect.disabled = true;
     const topicsLink = document.getElementById('topics-link');
     topicsLink.href = '/groups/' + groupId + '/topics';
     topicsLink.style.display = 'inline-block';
@@ -147,7 +186,9 @@ function openGroup(groupId, groupName) {
     });
 
     loadMessages(groupId);
+    populateMemberOptions(groupId);
     subscribeToGroup(groupId);
+
 
     if (pollingTimer) {
         clearInterval(pollingTimer);
@@ -167,6 +208,8 @@ function sendMessage() {
 
     input.disabled = true;
     document.getElementById('send-btn').disabled = true;
+
+    const excludedUserIds = selectedExcludedUserId ? [Number(selectedExcludedUserId)].filter(Boolean) : [];
 
     const tempMessage = {
         id: `temp-${Date.now()}-${tempMessageCounter++}`,
@@ -188,6 +231,7 @@ function sendMessage() {
         body: JSON.stringify({
             group_id: currentGroupId,
             content: content,
+            excluded_user_ids: excludedUserIds,
         }),
     })
     .then(async res => {

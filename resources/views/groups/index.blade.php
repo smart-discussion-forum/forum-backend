@@ -6,6 +6,9 @@
 @section('content')
 <div class="page-card" style="max-width: 960px; margin: 0 auto; padding: 32px; border-radius: 30px;">
     <div class="screen-title" style="text-align:left; margin-bottom: 6px;">Study Groups</div>
+    @if(session('success'))
+        <div class="success" style="margin-bottom: 16px;">{{ session('success') }}</div>
+    @endif
     <p style="color: var(--muted); margin-top: 0; margin-bottom: 28px;">
         Groups you're already part of, and groups you can still join.
     </p>
@@ -36,7 +39,7 @@
                                 {{ $group->pivot->role }}
                             </span>
                         </div>
-                        <form method="POST" action="/groups/{{ $group->id }}/leave">
+                        <form method="POST" action="{{ route('groups.leave', $group->id) }}">
                             @csrf
                             <button type="submit" class="dash-btn">Leave</button>
                         </form>
@@ -69,7 +72,7 @@
                             </div>
                         </div>
                         @if(auth()->user()->role === \App\Enums\RoleEnum::Student)
-                            <form method="POST" action="/groups/{{ $group->id }}/join">
+                            <form method="POST" action="{{ route('groups.join', $group->id) }}">
                                 @csrf
                                 <button type="submit" class="btn">Join</button>
                             </form>
