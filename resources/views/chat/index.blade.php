@@ -5,18 +5,23 @@
     <div class="screen-title">Group Chat</div>
     <div style="display:flex; gap:20px;">
 
-        <div style="width:250px; border-right:1px solid var(--border);">
+        <div style="width:250px; border-right:1px solid var(--border); display:flex; flex-direction:column;">
             <h3 style="margin-bottom:15px;">Your Groups</h3>
-            @forelse($groups as $group)
-            <div onclick='openGroup({{ $group->id }}, @json($group->name))'
-                style="padding:10px; cursor:pointer; border-radius:8px;"
-                class="dash-btn group-item"
-                data-group-id="{{ $group->id }}">
-                {{ $group->name }}
+            <div style="flex:1;">
+                @forelse($groups as $group)
+                <div onclick='openGroup({{ $group->id }}, @json($group->name))'
+                    style="padding:10px; cursor:pointer; border-radius:8px;"
+                    class="dash-btn group-item"
+                    data-group-id="{{ $group->id }}">
+                    {{ $group->name }}
+                </div>
+                @empty
+                <p style="color:var(--muted); font-size:14px;">You are not in any groups yet.</p>
+                @endforelse
             </div>
-            @empty
-            <p style="color:var(--muted); font-size:14px;">You are not in any groups yet.</p>
-            @endforelse
+            @if(auth()->user()->role !== \App\Enums\RoleEnum::Admin)
+            <a href="{{ route('groups.index') }}" class="dash-btn" style="display:inline-block; margin-top:10px;">Browse Groups</a>
+            @endif
         </div>
 
         <div style="flex:1;">

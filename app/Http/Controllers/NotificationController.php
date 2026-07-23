@@ -8,6 +8,16 @@ use Illuminate\Support\Facades\Auth;
 class NotificationController extends Controller
 {
     /**
+     * Full-page view of the authenticated user's notifications.
+     */
+    public function page()
+    {
+        $notifications = Auth::user()->notifications()->latest()->paginate(20);
+
+        return view('notifications.index', compact('notifications'));
+    }
+
+    /**
      * List the authenticated user's notifications.
      * Pass ?unread_only=1 to only get unread ones.
      */

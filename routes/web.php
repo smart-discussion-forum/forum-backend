@@ -9,6 +9,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\BlacklistController;
 
 // Public
 Route::get('/', fn() => view('welcome'));
@@ -29,6 +31,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/profile/password', [AuthController::class, 'updatePassword']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
+    Route::get('/notifications', [NotificationController::class, 'page'])->name('notifications.index');
+    Route::get('/blacklist-status', [BlacklistController::class, 'status'])->name('blacklist.status');
     Route::get('/recommendations', [RecommendationController::class, 'index'])->name('recommendations.index');
     // Groups
 // Groups

@@ -4,6 +4,7 @@ use App\Models\Group;
 use App\Models\ParticipationMark;
 use App\Models\Post;
 use App\Models\User;
+use App\Enums\RoleEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 class GroupController extends Controller
@@ -55,36 +56,40 @@ public function create()
         return response()->json($group);
     }
 
-    public function join($id)
-    {
-        $group = Group::findOrFail($id);
-        $user = Auth::user();
-        if ($group->members()->where('user_id', $user->id)->exists()) {
-            return response()->json([
-                'message' => 'You already belong to this group.',
-            ], 409);
+public function join(Request $request, $id)
+{
+    $group = Group::findOrFail($id);
+    $user = Auth::user();
+    if ($group->members()->where('user_id', $user->id)->exists()) {
+        if ($request->ajax() && $request->wantsJson()) {
+            return response()->json(['message' => 'You already belong to this group.'], 409);
         }
-        $group->members()->attach($user->id, [
-            'role' => 'Member',
-            'joined_at' => now(),
-        ]);
 
-        return redirect()->route('groups.index')->with('success', 'Joined group successfully.');
+        return redirect()->route('groups.index')->with('error', 'You already belong to this group.');
     }
+    $group->members()->attach($user->id, [
+        'role' => 'Member',
+        'joined_at' => now(),
+    ]);
 
-    public function leave($id)
-    {
-        $group = Group::findOrFail($id);
-        $user = Auth::user();
-        if (! $group->members()->where('user_id', $user->id)->exists()) {
-            return response()->json([
-                'message' => 'You are not a member of this group.',
-            ], 409);
+    return redirect()->route('groups.index')->with('success', 'Joined group successfully.');
+}
+
+public function leave(Request $request, $id)
+{
+    $group = Group::findOrFail($id);
+    $user = Auth::user();
+    if (! $group->members()->where('user_id', $user->id)->exists()) {
+        if ($request->ajax() && $request->wantsJson()) {
+            return response()->json(['message' => 'You are not a member of this group.'], 409);
         }
-        $group->members()->detach($user->id);
 
-        return redirect()->route('groups.index')->with('success', 'Left group successfully.');
+        return redirect()->route('groups.index')->with('error', 'You are not a member of this group.');
     }
+    $group->members()->detach($user->id);
+
+    return redirect()->route('groups.index')->with('success', 'Left group successfully.');
+}
 
     public function statistics(Request $request, $id)
     {
@@ -105,28 +110,32 @@ public function create()
             $allowedGroupIds = $currentUser->groups()->pluck('groups.id');
         }
 
-        if (! $allowedGroupIds->contains($group->id)) {
+if (! $allowedGroupIds->contains($group->id)) {
             abort(403);
         }
 
-        $memberCount = $group->members()->count();
-        $topicCount = $group->topics()->count();
-        $messageCount = $group->messages()->count();
+        $selectedGroupId = $request->query('group_id', $group->id);
+        $selectedGroup = Group::with(['creator'])->find($selectedGroupId);
 
-        $postCount = $group->topics()
+        if (! $selectedGroup || ! $allowedGroupIds->contains($selectedGroup->id)) {
+            $selectedGroup = $group;
+        }
+
+        $memberCount = $selectedGroup->members()->count();
+        $topicCount = $selectedGroup->topics()->count();
+        $messageCount = $selectedGroup->messages()->count();
+
+        $postCount = $selectedGroup->topics()
             ->withCount('posts')
             ->get()
             ->sum('posts_count');
 
-        $membersByRole = $group->members()
+        $membersByRole = $selectedGroup->members()
             ->get()
             ->groupBy('pivot.role')
             ->map(fn ($members) => $members->count());
 
-        $selectedGroupId = $request->query('group_id', $group->id);
-        $selectedGroup = $selectedGroupId ? Group::find($selectedGroupId) : null;
-
-        $visibleGroups = Group::query()
+        $visibleGroups = Group::query()    
             ->when($currentUser->role?->value === 'Lecturer', function ($query) use ($currentUser) {
                 $query->whereIn('id', $currentUser->createdGroups()->pluck('groups.id')->merge($currentUser->groups()->pluck('groups.id')));
             })
@@ -199,16 +208,16 @@ public function create()
             }
         }
 
-        return view('groups.statistics', [
-            'group_name' => $group->name,
-            'created_by' => $group->creator?->name,
+            return view('groups.statistics', [
+            'group_name' => $selectedGroup->name,
+            'created_by' => $selectedGroup->creator?->name,
             'member_count' => $memberCount,
             'topic_count' => $topicCount,
             'post_count' => $postCount,
             'message_count' => $messageCount,
             'members_by_role' => $membersByRole,
             'visible_groups' => $visibleGroups,
-            'selected_group_id' => $selectedGroup?->id ?? $group->id,
+            'selected_group_id' => $selectedGroup->id,
             'participation_rows' => $participationRows,
             'can_view_all' => $currentUser->role?->value === 'Admin',
             'current_user' => $currentUser,
@@ -226,27 +235,40 @@ public function create()
         return $user->last_active->gt(now()->subDays(7)) ? 'Active' : 'Inactive';
     }
 
-    public function manage()
-    {
-        $groups = Group::with('creator')
-            ->withCount(['members', 'topics'])
-            ->latest()
-            ->get();
+        public function manage()
+        {
+            $user = Auth::user();
 
-        return view('groups.manage', compact('groups'));
-    }
+            $groups = Group::with('creator')
+                ->withCount(['members', 'topics'])
+                ->when($user->role !== RoleEnum::Admin, fn ($query) => $query->where('created_by', $user->id))
+                ->latest()
+                ->get();
 
-    public function edit($id)
-    {
-        $group = Group::findOrFail($id);
-        return view('groups.edit', compact('group'));
-    }
+            return view('groups.manage', compact('groups'));
+        }
+        public function edit($id)
+        {
+            $group = Group::findOrFail($id);
+            $user = Auth::user();
 
-    public function update(Request $request, $id)
-    {
-        $group = Group::findOrFail($id);
+            if ($user->role !== RoleEnum::Admin && $group->created_by !== $user->id) {
+                abort(403, 'You can only edit groups you created.');
+            }
 
-        $validated = $request->validate([
+            return view('groups.edit', compact('group'));
+        }
+
+        public function update(Request $request, $id)
+        {
+            $group = Group::findOrFail($id);
+            $user = Auth::user();
+
+            if ($user->role !== RoleEnum::Admin && $group->created_by !== $user->id) {
+                abort(403, 'You can only edit groups you created.');
+            }
+
+            $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
         ]);
@@ -256,11 +278,17 @@ public function create()
         return redirect()->route('groups.manage')->with('success', 'Group updated successfully.');
     }
 
-    public function destroy($id)
-    {
-        $group = Group::findOrFail($id);
-        $group->delete();
+        public function destroy($id)
+        {
+            $group = Group::findOrFail($id);
+            $user = Auth::user();
 
-        return redirect()->route('groups.manage')->with('success', 'Group deleted successfully.');
-    }
+            if ($user->role !== RoleEnum::Admin && $group->created_by !== $user->id) {
+                abort(403, 'You can only delete groups you created.');
+            }
+
+            $group->delete();
+
+            return redirect()->route('groups.manage')->with('success', 'Group deleted successfully.');
+        }
 }
