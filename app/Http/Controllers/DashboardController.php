@@ -19,9 +19,11 @@ class DashboardController extends Controller
             'groupCount'   => Group::where('created_by', $user->id)->count(),
             'flaggedCount' => 0, // TODO: wire up once post moderation/flagging exists
         ]),
-        RoleEnum::Lecturer => view('dashboard.lecturer', [
-            'myGroups' => Group::where('created_by', $user->id)->get(),
-        ]),
+            RoleEnum::Lecturer => view('dashboard.lecturer', [
+                'myGroups' => Group::where('created_by', $user->id)
+                    ->withCount(['members', 'quizzes'])
+                    ->get(),
+            ]),
         default => view('dashboard'),
     };
 }
