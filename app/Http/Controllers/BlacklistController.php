@@ -12,6 +12,26 @@ use Illuminate\Support\Facades\Auth;
 class BlacklistController extends Controller
 {
     /**
+     * Show the authenticated user's own blacklist status/history.
+     * Anyone can view this for themselves, regardless of role.
+     */
+    public function status()
+    {
+        $user = Auth::user();
+
+        $entries = Blacklist::where('User_id', $user->id)
+            ->orderByDesc('Blacklisted_at')
+            ->get();
+
+        $activeEntry = $entries->first(fn (Blacklist $entry) => $entry->isActive());
+
+        return view('blacklist.status', [
+            'entries' => $entries,
+            'activeEntry' => $activeEntry,
+        ]);
+    }
+
+    /**
      * List currently-active blacklist entries. Lecturers/Admins only.
      */
     public function index(Request $request)
