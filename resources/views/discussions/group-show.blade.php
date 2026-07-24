@@ -75,6 +75,11 @@
         </div>
     </div>
 
+@endsection
+
+@push('scripts')
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
 <script>
 (function () {
     if (window.__topicThreadBound) return;
@@ -87,11 +92,28 @@
     const currentTopicId = Number(@json($topic->id));
     const postIds = new Set(@json($posts->pluck('id')->values()));
     const postsUrl = '/groups/' + currentGroupId + '/topics/' + currentTopicId + '/posts';
-    const apiPostsUrl = '/api/topics/' + currentTopicId + '/posts';
 
     const textarea = document.getElementById('reply-content');
     const button = document.getElementById('reply-send-btn');
     let sending = false;
+
+    window.Pusher = Pusher;
+    window.Echo = new Echo({
+        broadcaster: 'reverb',
+        key: @json(env('REVERB_APP_KEY')),
+        wsHost: @json(env('REVERB_HOST', 'localhost')),
+        wsPort: {{ env('REVERB_PORT', 8080) }},
+        wssPort: {{ env('REVERB_PORT', 8080) }},
+        forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
+        enabledTransports: ['ws', 'wss'],
+        authEndpoint: '/broadcasting/auth',
+        auth: {
+            headers: {
+                Authorization: 'Bearer ' + token,
+                Accept: 'application/json',
+            },
+        },
+    });
 
     function formatTime(value) {
         if (!value) return '';
@@ -130,19 +152,6 @@
 
         thread.appendChild(row);
         thread.scrollTop = thread.scrollHeight;
-    }
-
-    function loadPosts() {
-        const headers = { Accept: 'application/json' };
-        if (token) headers.Authorization = 'Bearer ' + token;
-
-        fetch(apiPostsUrl, { headers })
-            .then(res => res.json())
-            .then(posts => {
-                if (!Array.isArray(posts)) return;
-                posts.forEach(appendPost);
-            })
-            .catch(() => {});
     }
 
     function sendReply() {
@@ -192,47 +201,13 @@
         }
     });
 
-    setInterval(loadPosts, 3000);
+    window.Echo.private('group.' + currentGroupId)
+        .listen('.post.created', (event) => {
+            const post = event?.post ? event.post : event;
+            appendPost(post);
+        });
+
     document.getElementById('chat-thread').scrollTop = document.getElementById('chat-thread').scrollHeight;
-
-    function initRealtime() {
-        if (typeof Pusher === 'undefined' || typeof Echo === 'undefined') return;
-
-        try {
-            window.Pusher = Pusher;
-            window.Echo = new Echo({
-                broadcaster: 'reverb',
-                key: @json(env('REVERB_APP_KEY')),
-                wsHost: @json(env('REVERB_HOST', 'localhost')),
-                wsPort: {{ env('REVERB_PORT', 8080) }},
-                wssPort: {{ env('REVERB_PORT', 8080) }},
-                forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
-                enabledTransports: ['ws', 'wss'],
-                authEndpoint: '/broadcasting/auth',
-                auth: {
-                    headers: {
-                        Authorization: token ? ('Bearer ' + token) : '',
-                        Accept: 'application/json',
-                    },
-                },
-            });
-
-            window.Echo.private('group.' + currentGroupId)
-                .listen('.post.created', (event) => appendPost(event));
-        } catch (err) {
-            console.warn('Topic realtime unavailable:', err);
-        }
-    }
-
-    const pusherScript = document.createElement('script');
-    pusherScript.src = 'https://js.pusher.com/8.2.0/pusher.min.js';
-    pusherScript.onload = function () {
-        const echoScript = document.createElement('script');
-        echoScript.src = 'https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js';
-        echoScript.onload = initRealtime;
-        document.body.appendChild(echoScript);
-    };
-    document.body.appendChild(pusherScript);
 })();
 </script>
-@endsection
+@endpush
