@@ -752,12 +752,14 @@
     @endauth
 </div>
 @auth
-    @if(!empty($activeBlacklistEntry))
-        <div class="blacklist-banner">
-            Your account is blacklisted: {{ $activeBlacklistEntry->Reason }}.
-            <a href="{{ route('blacklist.status') }}">View details</a>
-        </div>
-    @endif
+    <div id="blacklistBannerContainer">
+        @if(!empty($activeBlacklistEntry))
+            <div class="blacklist-banner">
+                Your account is blacklisted: {{ $activeBlacklistEntry->Reason }}.
+                <a href="{{ route('blacklist.status') }}">View details</a>
+            </div>
+        @endif
+    </div>
 @endauth
 <script>
     document.getElementById('navHamburgerBtn')?.addEventListener('click', function(event) {
@@ -909,6 +911,35 @@
         });
 
         setInterval(pollNotifications, pollIntervalMs);
+    })();
+
+    (function() {
+        const bannerContainer = document.getElementById('blacklistBannerContainer');
+        if (!bannerContainer) return;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str ?? '';
+            return div.innerHTML;
+        }
+
+        function renderBanner(data) {
+            if (data.blacklisted) {
+                bannerContainer.innerHTML = '<div class="blacklist-banner">Your account is blacklisted: ' +
+                    escapeHtml(data.reason || 'Blacklisted by Admin.') + '. <a href="/blacklist-status">View details</a></div>';
+            } else {
+                bannerContainer.innerHTML = '';
+            }
+        }
+
+        function pollBlacklistStatus() {
+            fetch('/api/blacklist-status', { headers: { Accept: 'application/json' } })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(renderBanner)
+                .catch(() => {});
+        }
+
+        setInterval(pollBlacklistStatus, 8000);
     })();
 </script>
 <div class="screen-box @yield('box-style', 'wide')">

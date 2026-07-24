@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
     Route::get('/notifications', [NotificationController::class, 'page'])->name('notifications.index');
     Route::get('/blacklist-status', [BlacklistController::class, 'status'])->name('blacklist.status');
+    Route::get('/api/blacklist-status', [BlacklistController::class, 'apiStatus']);
     Route::get('/recommendations', [RecommendationController::class, 'index'])->name('recommendations.index');
     // Groups
 // Groups
@@ -71,6 +72,7 @@ Route::post('/quizzes/{id}/announce', [QuizController::class, 'announce']);
 
     // Admin: user management (warnings / blacklist)
     Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index')->middleware('admin');
+    Route::get('/admin/users/{user}', [AdminUserController::class, 'show'])->name('admin.users.show')->middleware('admin');
     Route::post('/admin/users/{user}/warn', [AdminUserController::class, 'warn'])->name('admin.users.warn')->middleware('admin');
     Route::post('/admin/users/{user}/blacklist', [AdminUserController::class, 'blacklist'])->name('admin.users.blacklist')->middleware('admin');
     Route::post('/admin/users/{user}/reinstate', [AdminUserController::class, 'reinstate'])->name('admin.users.reinstate')->middleware('admin');

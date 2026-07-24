@@ -44,7 +44,7 @@ class User extends Authenticatable
 
     public function topics()
     {
-        return $this->hasMany(Topic::class);
+        return $this->hasMany(Topic::class, 'created_by');
     }
     public function sentMessages()
 {
