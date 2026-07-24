@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Topic;
 use Illuminate\Http\Request;
@@ -29,6 +30,10 @@ class TopicController extends Controller
     public function store(Request $request, $groupId)
     {
         $user = Auth::user();
+
+        if (! in_array($user->role, [RoleEnum::Lecturer, RoleEnum::Admin], true)) {
+            return response()->json(['message' => 'Only lecturers can create topics.'], 403);
+        }
 
         if (! $user->groups()->where('groups.id', $groupId)->exists()) {
             return response()->json(['message' => 'You are not a member of this group.'], 403);

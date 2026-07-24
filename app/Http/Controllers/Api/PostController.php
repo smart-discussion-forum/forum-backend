@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\NewPostCreated;
 use App\Http\Controllers\Controller;
+use App\Models\ParticipationMark;
 use App\Models\Post;
 use App\Models\Topic;
 use Illuminate\Http\Request;
@@ -65,6 +66,7 @@ class PostController extends Controller
         ]);
 
         $post->load('user:id,name', 'topic:id,group_id');
+        ParticipationMark::awardForUserInGroup((int) $user->id, (int) $topic->group_id);
 
         try {
             broadcast(new NewPostCreated($post))->toOthers();

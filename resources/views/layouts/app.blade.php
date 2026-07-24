@@ -505,7 +505,9 @@
                <a href="/dashboard">Dashboard</a>
                 <a href="/quizzes">Quiz</a>
                 <a href="{{ route('recommendations.index') }}">Recommended</a>
-                <a href="{{ route('groups.statistics', auth()->user()->groups()->first()?->id ?? 1) }}">Stats</a>
+                @if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true))
+                    <a href="{{ route('groups.statistics', auth()->user()->createdGroups()->first()?->id ?? auth()->user()->groups()->first()?->id ?? 1) }}">Participation</a>
+                @endif
             </div>
             <div class="user-menu-container">
                 @php

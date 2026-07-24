@@ -29,11 +29,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/profile/password', [AuthController::class, 'updatePassword']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
-
+// Groups
+Route::get('/groups/manage', [GroupController::class, 'manage'])->name('groups.manage')->middleware('lecturer');
+Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create')->middleware('lecturer');
+Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+Route::post('/groups', [GroupController::class, 'store'])->name('groups.store')->middleware('lecturer');
+Route::get('/groups/{id}/statistics', [GroupController::class, 'statistics'])->name('groups.statistics')->middleware('lecturer');
+Route::get('/groups/{id}/edit', [GroupController::class, 'edit'])->name('groups.edit')->middleware('lecturer');
+Route::put('/groups/{id}', [GroupController::class, 'update'])->name('groups.update')->middleware('lecturer');
+Route::delete('/groups/{id}', [GroupController::class, 'destroy'])->name('groups.destroy')->middleware('lecturer');
+Route::post('/groups/{id}/join', [GroupController::class, 'join'])->name('groups.join');
+Route::post('/groups/{id}/leave', [GroupController::class, 'leave'])->name('groups.leave');
+Route::get('/groups/{id}', [GroupController::class, 'show'])->name('groups.show');
 // Topics, now scoped under a group's chat
     Route::get('/groups/{groupId}/topics', [TopicController::class, 'groupIndex']);
-    Route::get('/groups/{groupId}/topics/create', [TopicController::class, 'groupCreate']);
-    Route::post('/groups/{groupId}/topics', [TopicController::class, 'groupStore'])->middleware('not_blacklisted');
+    Route::get('/groups/{groupId}/topics/create', [TopicController::class, 'groupCreate'])->middleware('lecturer');
+    Route::post('/groups/{groupId}/topics', [TopicController::class, 'groupStore'])->middleware(['lecturer', 'not_blacklisted']);
     Route::get('/groups/{groupId}/topics/{id}', [TopicController::class, 'groupShow']);
     Route::post('/groups/{groupId}/topics/{topicId}/posts', [TopicController::class, 'groupStorePost'])->middleware('not_blacklisted');
     Route::get('/discussions', [TopicController::class, 'index'])->name('discussions.index');

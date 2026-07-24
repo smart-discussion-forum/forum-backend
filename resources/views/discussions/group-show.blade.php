@@ -16,7 +16,9 @@
                         <div class="screen-title" style="margin-bottom:6px; text-align:left; color:var(--text);">Topics</div>
                         <div class="sidebar-copy">Open a topic thread to see the conversation.</div>
                     </div>
-                    <a href="/groups/{{ $group->id }}/topics/create" class="chat-btn">New topic</a>
+                    @if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true))
+                        <a href="/groups/{{ $group->id }}/topics/create" class="chat-btn">New topic</a>
+                    @endif
                 </div>
 
                 <div class="topic-list">
