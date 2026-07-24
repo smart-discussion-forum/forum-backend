@@ -60,8 +60,6 @@ class AuthController extends Controller
                 'password' => 'required|min:6',
                 'role' => 'required|in:student,Lecturer,Admin',
                 'accepted_terms' => 'required',
-                'group_ids' => 'required|array|min:1',
-                'group_ids.*' => 'exists:groups,id',
             ]);
 
             $user = User::create([
@@ -72,7 +70,6 @@ class AuthController extends Controller
                 'status' => \App\Enums\StatusEnum::Active,
                 'last_active' => now(),
             ]);
-            $user->groups()->attach($data['group_ids'],['joined_at' => now()]);
 
         auth()->login($user);
         session(['api_token' => $user->createToken('web_token')->plainTextToken]);
