@@ -7,8 +7,10 @@ use App\Models\Topic;
 use App\Models\Post;
 use App\Models\Group;
 use App\Notifications\NewTopicPosted;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class TopicController extends Controller
 {
@@ -164,18 +166,29 @@ class TopicController extends Controller
 
         return redirect('/groups/' . $groupId . '/topics/' . $topicId);
     }
-    public function exportPdf($id)
+    public function exportPdf($groupId, $id)
     {
-    $topic = Topic::findOrFail($id);
-    $posts = Post::where('topic_id', $id)->with('user')->orderBy('created_at')->get();
+        $this->assertMember($groupId);
 
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('topics.export-pdf', [
-        'topic' => $topic,
-        'posts' => $posts,
-    ]);
+        $group = Group::findOrFail($groupId);
+        $topic = Topic::with(['creator', 'group'])
+            ->where('group_id', $groupId)
+            ->findOrFail($id);
 
-    $filename = 'topic-' . $id . '-' . now()->format('Y-m-d') . '.pdf';
+        $posts = $topic->posts()
+            ->with('user')
+            ->orderBy('created_at')
+            ->get();
 
-    return $pdf->download($filename);
+        $pdf = Pdf::loadView('topics.export-pdf', [
+            'topic' => $topic,
+            'posts' => $posts,
+            'group' => $group,
+        ])->setPaper('a4');
+
+        $slug = Str::slug($topic->title);
+        $filename = 'topic-' . $topic->id . ($slug ? '-' . $slug : '') . '-' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

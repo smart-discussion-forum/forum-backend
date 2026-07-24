@@ -20,8 +20,6 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/login', fn() => view('auth.login'))->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/topics/{id}/export-pdf', [TopicController::class, 'exportPdf']);
-
 // Protected
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -50,6 +48,7 @@ Route::get('/groups/{id}', [GroupController::class, 'show'])->name('groups.show'
     Route::get('/groups/{groupId}/topics/create', [TopicController::class, 'groupCreate']);
     Route::post('/groups/{groupId}/topics', [TopicController::class, 'groupStore'])->middleware('not_blacklisted');
     Route::get('/groups/{groupId}/topics/{id}', [TopicController::class, 'groupShow']);
+    Route::get('/groups/{groupId}/topics/{id}/export-pdf', [TopicController::class, 'exportPdf'])->name('topics.export-pdf');
     Route::post('/groups/{groupId}/topics/{topicId}/posts', [TopicController::class, 'groupStorePost'])->middleware('not_blacklisted');
     Route::get('/discussions', [TopicController::class, 'index'])->name('discussions.index');
     Route::get('/discussions/{id}', [TopicController::class, 'index'])->name('discussions.show');
