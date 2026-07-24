@@ -37719,3 +37719,55 @@
 #63 C:/Users/LENOVO/Documents/forum-backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('...')
 #64 {main}
 "} 
+[2026-07-24 15:02:21] local.WARNING: Realtime chat broadcast failed: Pusher error: No matching application for ID [199142].. {"message_id":38,"group_id":4} 
+[2026-07-24 15:02:40] local.WARNING: Realtime topic post broadcast failed: Pusher error: No matching application for ID [199142].. {"post_id":34,"topic_id":2} 
+[2026-07-24 15:28:35] local.ERROR: Uncaught ErrorException: Undefined variable $errors in C:\Users\LENOVO\Documents\forum-backend\storage\framework\views\2de4105093b813b8c280030f8f6406ff.php:12
+Stack trace:
+#0 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\Foundation\Bootstrap\HandleExceptions.php(262): Illuminate\Foundation\Bootstrap\HandleExceptions->handleError()
+#1 C:\Users\LENOVO\Documents\forum-backend\storage\framework\views\2de4105093b813b8c280030f8f6406ff.php(12): Illuminate\Foundation\Bootstrap\HandleExceptions->{closure:Illuminate\Foundation\Bootstrap\HandleExceptions::forwardsTo():261}()
+#2 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(123): require('...')
+#3 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(124): Illuminate\Filesystem\Filesystem::{closure:Illuminate\Filesystem\Filesystem::getRequire():120}()
+#4 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\Engines\PhpEngine.php(57): Illuminate\Filesystem\Filesystem->getRequire()
+#5 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\Engines\CompilerEngine.php(76): Illuminate\View\Engines\PhpEngine->evaluatePath()
+#6 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\View.php(208): Illuminate\View\Engines\CompilerEngine->get()
+#7 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\View.php(191): Illuminate\View\View->getContents()
+#8 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\View.php(160): Illuminate\View\View->renderContents()
+#9 Command line code(1): Illuminate\View\View->render()
+#10 {main}
+
+Next Illuminate\View\ViewException: Undefined variable $errors (View: C:\Users\LENOVO\Documents\forum-backend\resources\views\auth\login.blade.php) in C:\Users\LENOVO\Documents\forum-backend\storage\framework\views\2de4105093b813b8c280030f8f6406ff.php:12
+Stack trace:
+#0 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\Engines\PhpEngine.php(59): Illuminate\View\Engines\CompilerEngine->handleViewException()
+#1 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\Engines\CompilerEngine.php(76): Illuminate\View\Engines\PhpEngine->evaluatePath()
+#2 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\View.php(208): Illuminate\View\Engines\CompilerEngine->get()
+#3 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\View.php(191): Illuminate\View\View->getContents()
+#4 C:\Users\LENOVO\Documents\forum-backend\vendor\laravel\framework\src\Illuminate\View\View.php(160): Illuminate\View\View->renderContents()
+#5 Command line code(1): Illuminate\View\View->render()
+#6 {main}
+  thrown {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Uncaught ErrorException: Undefined variable $errors in C:\\Users\\LENOVO\\Documents\\forum-backend\\storage\\framework\\views\\2de4105093b813b8c280030f8f6406ff.php:12
+Stack trace:
+#0 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(262): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError()
+#1 C:\\Users\\LENOVO\\Documents\\forum-backend\\storage\\framework\\views\\2de4105093b813b8c280030f8f6406ff.php(12): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->{closure:Illuminate\\Foundation\\Bootstrap\\HandleExceptions::forwardsTo():261}()
+#2 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\Filesystem\\Filesystem.php(123): require('...')
+#3 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\Filesystem\\Filesystem.php(124): Illuminate\\Filesystem\\Filesystem::{closure:Illuminate\\Filesystem\\Filesystem::getRequire():120}()
+#4 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\Engines\\PhpEngine.php(57): Illuminate\\Filesystem\\Filesystem->getRequire()
+#5 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\Engines\\CompilerEngine.php(76): Illuminate\\View\\Engines\\PhpEngine->evaluatePath()
+#6 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\View.php(208): Illuminate\\View\\Engines\\CompilerEngine->get()
+#7 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\View.php(191): Illuminate\\View\\View->getContents()
+#8 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\View.php(160): Illuminate\\View\\View->renderContents()
+#9 Command line code(1): Illuminate\\View\\View->render()
+#10 {main}
+
+Next Illuminate\\View\\ViewException: Undefined variable $errors (View: C:\\Users\\LENOVO\\Documents\\forum-backend\\resources\\views\\auth\\login.blade.php) in C:\\Users\\LENOVO\\Documents\\forum-backend\\storage\\framework\\views\\2de4105093b813b8c280030f8f6406ff.php:12
+Stack trace:
+#0 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\Engines\\PhpEngine.php(59): Illuminate\\View\\Engines\\CompilerEngine->handleViewException()
+#1 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\Engines\\CompilerEngine.php(76): Illuminate\\View\\Engines\\PhpEngine->evaluatePath()
+#2 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\View.php(208): Illuminate\\View\\Engines\\CompilerEngine->get()
+#3 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\View.php(191): Illuminate\\View\\View->getContents()
+#4 C:\\Users\\LENOVO\\Documents\\forum-backend\\vendor\\laravel\\framework\\src\\Illuminate\\View\\View.php(160): Illuminate\\View\\View->renderContents()
+#5 Command line code(1): Illuminate\\View\\View->render()
+#6 {main}
+  thrown at C:/Users/LENOVO/Documents/forum-backend/storage/framework/views/2de4105093b813b8c280030f8f6406ff.php:12)
+[stacktrace]
+#0 {main}
+"} 

@@ -1,27 +1,23 @@
 @extends('layouts.app')
 
-@section('header')
-    <h2 class="screen-title" style="color:var(--text);">Admin Dashboard</h2>
-@endsection
-
 @section('content')
 <div class="page-card" style="max-width:980px; margin:30px auto; padding:30px;">
-
+    <h2 class="screen-title" style="color:var(--text); text-align:left; margin:0 0 8px;">Admin Dashboard</h2>
     <p style="color:var(--muted); margin-bottom:24px;">
         Welcome back, {{ auth()->user()->name }}. You're signed in as
         <span style="color:var(--text); font-weight:600;">Admin</span>.
     </p>
 
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px;">
-        <div class="page-card" style="margin:0; padding:18px; text-align:center;">
+        <div style="margin:0; padding:18px; text-align:center; border:1px solid rgba(148,163,184,0.22); border-radius:16px; background:rgba(255,255,255,0.55);">
             <p style="color:var(--muted); font-size:0.875rem; margin:0 0 6px;">Groups you own</p>
             <p style="color:var(--text); font-size:1.75rem; font-weight:700; margin:0;">{{ $groupCount }}</p>
         </div>
-        <div class="page-card" style="margin:0; padding:18px; text-align:center;">
+        <div style="margin:0; padding:18px; text-align:center; border:1px solid rgba(148,163,184,0.22); border-radius:16px; background:rgba(255,255,255,0.55);">
             <p style="color:var(--muted); font-size:0.875rem; margin:0 0 6px;">Posts flagged for moderation</p>
             <p style="color:#dc2626; font-size:1.75rem; font-weight:700; margin:0;">{{ $flaggedCount }}</p>
         </div>
-        <div class="page-card" style="margin:0; padding:18px; text-align:center;">
+        <div style="margin:0; padding:18px; text-align:center; border:1px solid rgba(148,163,184,0.22); border-radius:16px; background:rgba(255,255,255,0.55);">
             <p style="color:var(--muted); font-size:0.875rem; margin:0 0 6px;">Your role</p>
             <p style="color:var(--text); font-size:1.75rem; font-weight:700; margin:0;">Admin</p>
         </div>

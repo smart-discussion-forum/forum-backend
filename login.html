@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Mindshare Discussion Forum')</title>
+    <meta name="csrf-token" content="MAZ7khEwoLJl6OUZOgg2yM0RfwKFnwaYJE3W3pBJ">
+    <title>Mindshare Discussion Forum</title>
     <style>
         :root {
             --bg-0: #0b1020;
@@ -219,6 +219,7 @@
         .topic-summary-wrap,
         .quiz-table-wrap,
         .hero-card,
+        .page-card,
         .welcome-card {
             background: var(--glass);
             border: 1px solid var(--line);
@@ -250,17 +251,9 @@
             color: var(--text);
         }
         .page-card {
-            background: rgba(245, 247, 250, 0.96);
+            background: rgba(245, 247, 250, 0.92);
             color: var(--text);
             border-radius: 30px;
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
-        }
-        .page-card .page-card,
-        .page-card .table-card,
-        .page-card .part-metric,
-        .page-card .part-row {
-            box-shadow: none;
         }
         .panel {
             padding: 18px;
@@ -507,40 +500,12 @@
 </head>
 <body>
 <div class="navbar">
-        @auth
-            <div class="nav-links">
-               <a href="/dashboard">Dashboard</a>
-                <a href="/quizzes">Quiz</a>
-                <a href="{{ route('recommendations.index') }}">Recommended</a>
-                @if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true))
-                    <a href="{{ route('groups.statistics', auth()->user()->createdGroups()->first()?->id ?? auth()->user()->groups()->first()?->id ?? 1) }}">Participation</a>
-                @endif
-            </div>
-            <div class="user-menu-container">
-                @php
-                    $initials = collect(explode(' ', auth()->user()->name))
-                        ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
-                        ->take(2)
-                        ->join('');
-                @endphp
-                <button class="user-profile-btn" id="userMenuBtn" title="{{ auth()->user()->name }}">{{ $initials }}</button>
-                <div class="user-dropdown" id="userDropdown">
-                    <div class="user-info">{{ auth()->user()->name }}<br>{{ ucfirst(auth()->user()->role->value) }}</div>
-                    <a href="/profile">View Profile</a>
-                    <form method="POST" action="/logout" style="margin:0;">
-                        @csrf
-                        <button type="submit" style="margin:0;">Logout</button>
-                    </form>
-                </div>
-            </div>
-        @else
-        <div class="nav-links">
+                <div class="nav-links">
             <a href="/">Home</a>
             <a href="/login">Login</a>
             <a href="/register">Register</a>
         </div>
-    @endauth
-</div>
+    </div>
 <script>
     document.getElementById('userMenuBtn')?.addEventListener('click', function() {
         const dropdown = document.getElementById('userDropdown');
@@ -553,113 +518,21 @@
         }
     });
 </script>
-<div class="screen-box @yield('box-style', 'wide')">
-    @if(session('success'))
-        <div class="success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="error">{{ session('error') }}</div>
-    @endif
-    @hasSection('header')
-        <div style="max-width:1100px; margin:0 auto 12px; padding:0 8px;">
-            @yield('header')
-        </div>
-    @endif
-    @yield('content')
-</div>
-    @auth
-@php
-    $requestPath = request()->path();
-    $skipQuizPoll = str_contains($requestPath, 'chat')
-        || str_contains($requestPath, 'topics/')
-        || str_contains($requestPath, 'discussions');
-@endphp
-@if(auth()->user()->role->value === 'student' && ! $skipQuizPoll)
-<div id="quizCountdownBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#4f7ca8,#2f5f84); color:#fff; text-align:center; padding:12px; font-weight:700;">
-    <span id="quizCountdownText"></span>
-</div>
-<script>
-    let quizRedirectTimer = null;
-    let quizPollTimer = null;
-    // Only show the countdown banner within this many seconds before start (30s)
-    const countdownWindowSeconds = 30;
-
-    function formatCountdown(totalSeconds) {
-        const mins = Math.floor(totalSeconds / 60);
-        const secs = totalSeconds % 60;
-        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-    }
-
-    function redirectToQuiz(quizId) {
-        const targetPath = '/quizzes/' + quizId;
-        if (!window.location.pathname.startsWith(targetPath)) {
-            window.location.href = targetPath;
-        }
-    }
-
-    function checkUpcomingQuiz() {
-        fetch('/quizzes/upcoming-check')
-            .then(res => res.json())
-            .then(data => {
-                const banner = document.getElementById('quizCountdownBanner');
-                const text = document.getElementById('quizCountdownText');
-
-                if (!data.upcoming) {
-                    banner.style.display = 'none';
-                    if (quizRedirectTimer) {
-                        clearInterval(quizRedirectTimer);
-                        quizRedirectTimer = null;
-                    }
-                    return;
-                }
-
-                if (data.upcoming.phase === 'active') {
-                    const targetPath = '/quizzes/' + data.upcoming.id;
-                    // If already viewing the quiz page, don't show the banner
-                    if (window.location.pathname.startsWith(targetPath)) {
-                        banner.style.display = 'none';
-                        return;
-                    }
-
-                    banner.style.display = 'block';
-                    text.textContent = `"${data.upcoming.title}" is live now.`;
-                    redirectToQuiz(data.upcoming.id);
-                    return;
-                }
-
-                const seconds = data.upcoming.seconds_until_start;
-
-                if (seconds <= countdownWindowSeconds) {
-                    banner.style.display = 'block';
-                    let remaining = seconds;
-
-                    if (quizRedirectTimer) clearInterval(quizRedirectTimer);
-
-                    quizRedirectTimer = setInterval(() => {
-                        remaining--;
-                        text.textContent = `"${data.upcoming.title}" starts in ${formatCountdown(Math.max(0, remaining))}`;
-
-                        if (remaining <= 0) {
-                            clearInterval(quizRedirectTimer);
-                            quizRedirectTimer = null;
-                            redirectToQuiz(data.upcoming.id);
-                        }
-                    }, 1000);
-
-                    text.textContent = `"${data.upcoming.title}" starts in ${formatCountdown(remaining)}`;
-                } else {
-                    banner.style.display = 'none';
-                }
-            })
-            .catch(() => {});
-    }
-
-    checkUpcomingQuiz();
-    quizPollTimer = setInterval(checkUpcomingQuiz, 5000);
-</script>
-@endif
-@endauth
-    
-    @stack('scripts')
-</body>
+<div class="screen-box wide">
+                <div class="auth-card" style="max-width:420px; margin:58px auto; padding:30px;">
+        <div class="screen-title" style="margin-bottom:6px; font-size:26px;">Login</div>
+        <p style="text-align:center; color:var(--muted); margin-top:0; margin-bottom:22px;">Access your discussions, quizzes, and profile.</p>
+        <form method="POST" action="/login">
+            <input type="hidden" name="_token" value="MAZ7khEwoLJl6OUZOgg2yM0RfwKFnwaYJE3W3pBJ" autocomplete="off">            <label>Email:</label>
+            <input type="email" name="email">
+            <label>Password:</label>
+            <input type="password" name="password">
+                        <div style="text-align:right; margin-top:10px;">
+                <button type="submit" class="btn">Login</button>
+            </div>
+        </form>
+    </div>
+    </div>
+        
+    </body>
 </html>
