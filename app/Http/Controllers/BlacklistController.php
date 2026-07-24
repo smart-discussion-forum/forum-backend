@@ -32,6 +32,33 @@ class BlacklistController extends Controller
     }
 
     /**
+     * Lightweight JSON status check, polled from the navbar/status page so
+     * a user's blacklist banner can update without a full page reload.
+     */
+    public function apiStatus()
+    {
+        $user = Auth::user()->fresh();
+
+        if ($user->status !== StatusEnum::Blacklisted) {
+            return response()->json(['blacklisted' => false]);
+        }
+
+        $activeEntry = Blacklist::where('User_id', $user->id)
+            ->orderByDesc('Blacklisted_at')
+            ->get()
+            ->first(fn (Blacklist $entry) => $entry->isActive());
+
+        if (! $activeEntry) {
+            return response()->json(['blacklisted' => false]);
+        }
+
+        return response()->json([
+            'blacklisted' => true,
+            'reason' => $activeEntry->Reason,
+        ]);
+    }
+
+    /**
      * List currently-active blacklist entries. Lecturers/Admins only.
      */
     public function index(Request $request)
