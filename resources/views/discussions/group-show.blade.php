@@ -74,7 +74,6 @@
             </section>
         </div>
     </div>
-
 @endsection
 
 @push('scripts')
@@ -82,9 +81,6 @@
 <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
 <script>
 (function () {
-    if (window.__topicThreadBound) return;
-    window.__topicThreadBound = true;
-
     const csrfToken = @json(csrf_token());
     const token = @json(session('api_token'));
     const authUserId = Number(@json(auth()->id()));
@@ -97,24 +93,6 @@
     const button = document.getElementById('reply-send-btn');
     let sending = false;
 
-    window.Pusher = Pusher;
-    window.Echo = new Echo({
-        broadcaster: 'reverb',
-        key: @json(env('REVERB_APP_KEY')),
-        wsHost: @json(env('REVERB_HOST', 'localhost')),
-        wsPort: {{ env('REVERB_PORT', 8080) }},
-        wssPort: {{ env('REVERB_PORT', 8080) }},
-        forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
-        enabledTransports: ['ws', 'wss'],
-        authEndpoint: '/broadcasting/auth',
-        auth: {
-            headers: {
-                Authorization: 'Bearer ' + token,
-                Accept: 'application/json',
-            },
-        },
-    });
-
     function formatTime(value) {
         if (!value) return '';
         const date = new Date(value);
@@ -123,7 +101,7 @@
     }
 
     function appendPost(post) {
-        if (!post || post.id == null || postIds.has(post.id)) return;
+        if (!post || post.id == null || postIds.has(Number(post.id)) || postIds.has(post.id)) return;
         if (post.topic_id != null && Number(post.topic_id) !== currentTopicId) return;
 
         postIds.add(post.id);
@@ -154,6 +132,13 @@
         thread.scrollTop = thread.scrollHeight;
     }
 
+    function removePostById(id) {
+        postIds.delete(id);
+        postIds.delete(Number(id));
+        const el = document.querySelector(`[data-post-id="${CSS.escape(String(id))}"]`);
+        if (el) el.remove();
+    }
+
     function sendReply() {
         if (sending) return;
 
@@ -163,6 +148,16 @@
         sending = true;
         button.disabled = true;
         textarea.disabled = true;
+
+        const tempId = 'temp-' + Date.now();
+        appendPost({
+            id: tempId,
+            topic_id: currentTopicId,
+            content: content,
+            created_at: new Date().toISOString(),
+            user: { id: authUserId, name: 'You' },
+        });
+        textarea.value = '';
 
         fetch(postsUrl, {
             method: 'POST',
@@ -179,10 +174,12 @@
             if (!res.ok || !data.success || !data.post) {
                 throw new Error(typeof data.message === 'string' ? data.message : 'Failed to send reply.');
             }
+            removePostById(tempId);
             appendPost(data.post);
-            textarea.value = '';
         })
         .catch((err) => {
+            removePostById(tempId);
+            textarea.value = content;
             alert(err.message || 'Failed to send reply.');
         })
         .finally(() => {
@@ -193,6 +190,7 @@
         });
     }
 
+    // Wire sending first so Reverb/Echo failures cannot break replies.
     button.addEventListener('click', sendReply);
     textarea.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -201,13 +199,41 @@
         }
     });
 
-    window.Echo.private('group.' + currentGroupId)
-        .listen('.post.created', (event) => {
-            const post = event?.post ? event.post : event;
-            appendPost(post);
+    document.getElementById('chat-thread').scrollTop = document.getElementById('chat-thread').scrollHeight;
+
+    try {
+        if (typeof Pusher === 'undefined' || typeof Echo === 'undefined' || !token) {
+            throw new Error('Realtime libraries unavailable');
+        }
+
+        window.Pusher = Pusher;
+        window.Echo = new Echo({
+            broadcaster: 'reverb',
+            key: @json(env('REVERB_APP_KEY')),
+            wsHost: @json(env('REVERB_HOST', 'localhost')),
+            wsPort: @json((int) (env('REVERB_PORT') ?: 8080)),
+            wssPort: @json((int) (env('REVERB_PORT') ?: 8080)),
+            forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
+            enabledTransports: ['ws', 'wss'],
+            disableStats: true,
+            authEndpoint: '/broadcasting/auth',
+            auth: {
+                headers: {
+                    Authorization: 'Bearer ' + token,
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+            },
         });
 
-    document.getElementById('chat-thread').scrollTop = document.getElementById('chat-thread').scrollHeight;
+        window.Echo.private('group.' + currentGroupId)
+            .listen('.post.created', (e) => {
+                const post = e?.post ? e.post : e;
+                appendPost(post);
+            });
+    } catch (err) {
+        console.warn('Topic realtime unavailable:', err);
+    }
 })();
 </script>
 @endpush

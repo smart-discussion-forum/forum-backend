@@ -554,7 +554,13 @@
     @yield('content')
     </div>
     @auth
-@if(auth()->user()->role->value === 'student')
+@php
+    $requestPath = request()->path();
+    $skipQuizPoll = str_contains($requestPath, 'chat')
+        || str_contains($requestPath, 'topics/')
+        || str_contains($requestPath, 'discussions');
+@endphp
+@if(auth()->user()->role->value === 'student' && ! $skipQuizPoll)
 <div id="quizCountdownBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#4f7ca8,#2f5f84); color:#fff; text-align:center; padding:12px; font-weight:700;">
     <span id="quizCountdownText"></span>
 </div>

@@ -61,7 +61,6 @@ let currentGroupId = null;
 let currentGroupMembers = [];
 let echoChannel = null;
 const messageIds = new Set();
-let pollingTimer = null;
 let tempMessageCounter = 0;
 
 window.Pusher = Pusher;
@@ -69,8 +68,8 @@ window.Echo = new Echo({
     broadcaster: 'reverb',
     key: @json(env('REVERB_APP_KEY')),
     wsHost: @json(env('REVERB_HOST', 'localhost')),
-    wsPort: {{ env('REVERB_PORT', 8080) }},
-    wssPort: {{ env('REVERB_PORT', 8080) }},
+    wsPort: @json((int) (env('REVERB_PORT') ?: 8080)),
+    wssPort: @json((int) (env('REVERB_PORT') ?: 8080)),
     forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
     enabledTransports: ['ws', 'wss'],
     authEndpoint: '/broadcasting/auth',
@@ -250,17 +249,6 @@ function openGroup(groupId, groupName) {
     loadMessages(groupId);
     populateMemberOptions(groupId);
     subscribeToGroup(groupId);
-
-
-    if (pollingTimer) {
-        clearInterval(pollingTimer);
-    }
-
-    pollingTimer = setInterval(() => {
-        if (currentGroupId) {
-            loadMessages(currentGroupId);
-        }
-    }, 3000);
 }
 
 function sendMessage() {
