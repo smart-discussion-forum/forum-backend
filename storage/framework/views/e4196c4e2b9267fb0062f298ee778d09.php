@@ -15,7 +15,9 @@
                         <div class="screen-title" style="margin-bottom:6px; text-align:left; color:var(--text);">Topics</div>
                         <div class="sidebar-copy">Open a topic thread to see the conversation.</div>
                     </div>
-                    <a href="/groups/<?php echo e($group->id); ?>/topics/create" class="chat-btn">New topic</a>
+                    <?php if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true)): ?>
+                        <a href="/groups/<?php echo e($group->id); ?>/topics/create" class="chat-btn">New topic</a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="topic-list">
@@ -78,12 +80,13 @@
             </section>
         </div>
     </div>
+<?php $__env->stopSection(); ?>
 
+<?php $__env->startPush('scripts'); ?>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
 <script>
 (function () {
-    if (window.__topicThreadBound) return;
-    window.__topicThreadBound = true;
-
     const csrfToken = <?php echo json_encode(csrf_token(), 15, 512) ?>;
     const token = <?php echo json_encode(session('api_token'), 15, 512) ?>;
     const authUserId = Number(<?php echo json_encode(auth()->id(), 15, 512) ?>);
@@ -91,7 +94,6 @@
     const currentTopicId = Number(<?php echo json_encode($topic->id, 15, 512) ?>);
     const postIds = new Set(<?php echo json_encode($posts->pluck('id')->values(), 15, 512) ?>);
     const postsUrl = '/groups/' + currentGroupId + '/topics/' + currentTopicId + '/posts';
-    const apiPostsUrl = '/api/topics/' + currentTopicId + '/posts';
 
     const textarea = document.getElementById('reply-content');
     const button = document.getElementById('reply-send-btn');
@@ -105,7 +107,7 @@
     }
 
     function appendPost(post) {
-        if (!post || post.id == null || postIds.has(post.id)) return;
+        if (!post || post.id == null || postIds.has(Number(post.id)) || postIds.has(post.id)) return;
         if (post.topic_id != null && Number(post.topic_id) !== currentTopicId) return;
 
         postIds.add(post.id);
@@ -136,17 +138,11 @@
         thread.scrollTop = thread.scrollHeight;
     }
 
-    function loadPosts() {
-        const headers = { Accept: 'application/json' };
-        if (token) headers.Authorization = 'Bearer ' + token;
-
-        fetch(apiPostsUrl, { headers })
-            .then(res => res.json())
-            .then(posts => {
-                if (!Array.isArray(posts)) return;
-                posts.forEach(appendPost);
-            })
-            .catch(() => {});
+    function removePostById(id) {
+        postIds.delete(id);
+        postIds.delete(Number(id));
+        const el = document.querySelector(`[data-post-id="${CSS.escape(String(id))}"]`);
+        if (el) el.remove();
     }
 
     function sendReply() {
@@ -158,6 +154,16 @@
         sending = true;
         button.disabled = true;
         textarea.disabled = true;
+
+        const tempId = 'temp-' + Date.now();
+        appendPost({
+            id: tempId,
+            topic_id: currentTopicId,
+            content: content,
+            created_at: new Date().toISOString(),
+            user: { id: authUserId, name: 'You' },
+        });
+        textarea.value = '';
 
         fetch(postsUrl, {
             method: 'POST',
@@ -174,10 +180,12 @@
             if (!res.ok || !data.success || !data.post) {
                 throw new Error(typeof data.message === 'string' ? data.message : 'Failed to send reply.');
             }
+            removePostById(tempId);
             appendPost(data.post);
-            textarea.value = '';
         })
         .catch((err) => {
+            removePostById(tempId);
+            textarea.value = content;
             alert(err.message || 'Failed to send reply.');
         })
         .finally(() => {
@@ -188,6 +196,7 @@
         });
     }
 
+    // Wire sending first so Reverb/Echo failures cannot break replies.
     button.addEventListener('click', sendReply);
     textarea.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -196,49 +205,43 @@
         }
     });
 
-    setInterval(loadPosts, 3000);
     document.getElementById('chat-thread').scrollTop = document.getElementById('chat-thread').scrollHeight;
 
-    function initRealtime() {
-        if (typeof Pusher === 'undefined' || typeof Echo === 'undefined') return;
-
-        try {
-            window.Pusher = Pusher;
-            window.Echo = new Echo({
-                broadcaster: 'reverb',
-                key: <?php echo json_encode(env('REVERB_APP_KEY'), 15, 512) ?>,
-                wsHost: <?php echo json_encode(env('REVERB_HOST', 'localhost'), 512) ?>,
-                wsPort: <?php echo e(env('REVERB_PORT', 8080)); ?>,
-                wssPort: <?php echo e(env('REVERB_PORT', 8080)); ?>,
-                forceTLS: <?php echo json_encode(env('REVERB_SCHEME', 'http') === 'https', 512) ?>,
-                enabledTransports: ['ws', 'wss'],
-                authEndpoint: '/broadcasting/auth',
-                auth: {
-                    headers: {
-                        Authorization: token ? ('Bearer ' + token) : '',
-                        Accept: 'application/json',
-                    },
-                },
-            });
-
-            window.Echo.private('group.' + currentGroupId)
-                .listen('.post.created', (event) => appendPost(event));
-        } catch (err) {
-            console.warn('Topic realtime unavailable:', err);
+    try {
+        if (typeof Pusher === 'undefined' || typeof Echo === 'undefined' || !token) {
+            throw new Error('Realtime libraries unavailable');
         }
-    }
 
-    const pusherScript = document.createElement('script');
-    pusherScript.src = 'https://js.pusher.com/8.2.0/pusher.min.js';
-    pusherScript.onload = function () {
-        const echoScript = document.createElement('script');
-        echoScript.src = 'https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js';
-        echoScript.onload = initRealtime;
-        document.body.appendChild(echoScript);
-    };
-    document.body.appendChild(pusherScript);
+        window.Pusher = Pusher;
+        window.Echo = new Echo({
+            broadcaster: 'reverb',
+            key: <?php echo json_encode(env('REVERB_APP_KEY'), 15, 512) ?>,
+            wsHost: <?php echo json_encode(env('REVERB_HOST', 'localhost'), 512) ?>,
+            wsPort: <?php echo json_encode((int) (env('REVERB_PORT') ?: 8080), 15, 512) ?>,
+            wssPort: <?php echo json_encode((int) (env('REVERB_PORT') ?: 8080), 15, 512) ?>,
+            forceTLS: <?php echo json_encode(env('REVERB_SCHEME', 'http') === 'https', 512) ?>,
+            enabledTransports: ['ws', 'wss'],
+            disableStats: true,
+            authEndpoint: '/broadcasting/auth',
+            auth: {
+                headers: {
+                    Authorization: 'Bearer ' + token,
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+            },
+        });
+
+        window.Echo.private('group.' + currentGroupId)
+            .listen('.post.created', (e) => {
+                const post = e?.post ? e.post : e;
+                appendPost(post);
+            });
+    } catch (err) {
+        console.warn('Topic realtime unavailable:', err);
+    }
 })();
 </script>
-<?php $__env->stopSection(); ?>
+<?php $__env->stopPush(); ?>
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\LENOVO\Documents\forum-backend\resources\views/discussions/group-show.blade.php ENDPATH**/ ?>

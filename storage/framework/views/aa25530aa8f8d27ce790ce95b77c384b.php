@@ -39,6 +39,8 @@
         justify-content: space-between;
         align-items: center;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        position: relative;
+        z-index: 100;
     }
     .navbar .nav-links {
         display: flex;
@@ -68,6 +70,84 @@
         }
         .nac-logout:hover {
             opacity: 0.95;
+        }
+        .user-menu-container {
+            position: relative;
+        }
+        .user-profile-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f7ca8, #2f5f84);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+        }
+        .user-profile-btn:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+        .user-dropdown {
+            position: fixed;
+            top: 54px;
+            right: 28px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(18px);
+            min-width: 180px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            display: none;
+            flex-direction: column;
+            z-index: 10000;
+        }
+        .user-dropdown.active {
+            display: flex;
+        }
+        .user-dropdown a,
+        .user-dropdown form {
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.15s ease;
+            display: block;
+        }
+        .user-dropdown a:last-child,
+        .user-dropdown form:last-child {
+            border-bottom: none;
+        }
+        .user-dropdown a:hover,
+        .user-dropdown form:hover {
+            background: rgba(79, 124, 168, 0.3);
+        }
+        .user-dropdown button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.15s ease;
+        }
+        .user-dropdown form button:hover {
+            background: rgba(79, 124, 168, 0.3);
+        }
+        .user-dropdown .user-info {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
         }
             .screen-box {
             background: transparent;
@@ -424,14 +504,27 @@
             <div class="nav-links">
                <a href="/dashboard">Dashboard</a>
                 <a href="/quizzes">Quiz</a>
-                <a href="/profile">Profile</a>
+                <a href="<?php echo e(route('recommendations.index')); ?>">Recommended</a>
+                <?php if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true)): ?>
+                    <a href="<?php echo e(route('groups.statistics', auth()->user()->createdGroups()->first()?->id ?? auth()->user()->groups()->first()?->id ?? 1)); ?>">Participation</a>
+                <?php endif; ?>
             </div>
-            <div style="color:white; display:flex; align-items:center; gap:15px;">
-                <span><?php echo e(auth()->user()->name); ?> (<?php echo e(ucfirst(auth()->user()->role->value)); ?>)</span>
-                <form method="POST" action="/logout" style="display:inline;">
-                    <?php echo csrf_field(); ?>
-                    <button type="submit" class="nav-logout">Logout</button>
-                </form>
+            <div class="user-menu-container">
+                <?php
+                    $initials = collect(explode(' ', auth()->user()->name))
+                        ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                        ->take(2)
+                        ->join('');
+                ?>
+                <button class="user-profile-btn" id="userMenuBtn" title="<?php echo e(auth()->user()->name); ?>"><?php echo e($initials); ?></button>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="user-info"><?php echo e(auth()->user()->name); ?><br><?php echo e(ucfirst(auth()->user()->role->value)); ?></div>
+                    <a href="/profile">View Profile</a>
+                    <form method="POST" action="/logout" style="margin:0;">
+                        <?php echo csrf_field(); ?>
+                        <button type="submit" style="margin:0;">Logout</button>
+                    </form>
+                </div>
             </div>
         <?php else: ?>
         <div class="nav-links">
@@ -441,6 +534,18 @@
         </div>
     <?php endif; ?>
 </div>
+<script>
+    document.getElementById('userMenuBtn')?.addEventListener('click', function() {
+        const dropdown = document.getElementById('userDropdown');
+        dropdown.classList.toggle('active');
+    });
+    document.addEventListener('click', function(event) {
+        const container = document.querySelector('.user-menu-container');
+        if (container && !container.contains(event.target)) {
+            document.getElementById('userDropdown')?.classList.remove('active');
+        }
+    });
+</script>
 <div class="screen-box <?php echo $__env->yieldContent('box-style', 'wide'); ?>">
     <?php if(session('success')): ?>
         <div class="success"><?php echo e(session('success')); ?></div>
@@ -451,7 +556,13 @@
     <?php echo $__env->yieldContent('content'); ?>
     </div>
     <?php if(auth()->guard()->check()): ?>
-<?php if(auth()->user()->role->value === 'student'): ?>
+<?php
+    $requestPath = request()->path();
+    $skipQuizPoll = str_contains($requestPath, 'chat')
+        || str_contains($requestPath, 'topics/')
+        || str_contains($requestPath, 'discussions');
+?>
+<?php if(auth()->user()->role->value === 'student' && ! $skipQuizPoll): ?>
 <div id="quizCountdownBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#4f7ca8,#2f5f84); color:#fff; text-align:center; padding:12px; font-weight:700;">
     <span id="quizCountdownText"></span>
 </div>

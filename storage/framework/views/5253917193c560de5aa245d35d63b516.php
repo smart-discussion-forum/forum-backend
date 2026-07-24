@@ -6,7 +6,9 @@
         </div>
         <p style="text-align:center; color:var(--muted); margin-top:0; margin-bottom:22px;">Browse topic summaries, see the latest discussion snippet, and jump into a thread.</p>
         <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
-            <a href="/groups/<?php echo e($group->id); ?>/topics/create" class="dash-btn">New topic</a>
+            <?php if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true)): ?>
+                <a href="/groups/<?php echo e($group->id); ?>/topics/create" class="dash-btn">New topic</a>
+            <?php endif; ?>
         </div>
 
         <div class="table-card">

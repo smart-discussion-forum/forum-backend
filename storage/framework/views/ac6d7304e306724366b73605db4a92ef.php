@@ -6,6 +6,7 @@
             <a href="<?php echo e(route('groups.index')); ?>" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Groups</a>
             <a href="/chat" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Group Chat</a>
             <a href="/quizzes" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Quizzes</a>
+            <a href="<?php echo e(route('recommendations.index')); ?>" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Recommendations</a>
             <a href="/profile" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Profile</a>
         </div>
     </div>

@@ -29,11 +29,19 @@
             </div>
            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
     <input type="text" id="message-input" placeholder="Type a message..."
-        style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-1); color:white;" disabled>
-    <select id="exclude-select" style="padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--bg-1); color:white; font-size:12px; max-width:120px;" disabled>
-        <option value="">Exclude member</option>
-    </select>
-    
+        style="flex:1; min-width:200px; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-1); color:white;" disabled>
+    <div id="exclude-dropdown" style="position:relative; opacity:0.6; pointer-events:none;">
+        <button type="button" id="exclude-toggle" onclick="toggleExcludeDropdown()"
+            style="padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg-1); color:white; font-size:12px; cursor:pointer; white-space:nowrap;">
+            Exclude members ▾
+        </button>
+        <div id="exclude-menu" style="display:none; position:absolute; bottom:calc(100% + 6px); right:0; z-index:20; min-width:180px; max-width:240px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--bg-1); box-shadow:0 8px 24px rgba(0,0,0,0.35);">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Exclude members</div>
+            <div id="exclude-checkboxes" style="display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto; font-size:12px; color:white;">
+                <span style="color:var(--muted);">Select a group first</span>
+            </div>
+        </div>
+    </div>
     <button onclick="sendMessage()" class="btn" id="send-btn" disabled>Send</button>
 </div>
         </div>
@@ -50,10 +58,8 @@ const token = <?php echo json_encode(session('api_token'), 15, 512) ?>;
 const groupsData = <?php echo json_encode($groupsData, 15, 512) ?>;
 let currentGroupId = null;
 let currentGroupMembers = [];
-let selectedExcludedUserId = null;
 let echoChannel = null;
 const messageIds = new Set();
-let pollingTimer = null;
 let tempMessageCounter = 0;
 
 window.Pusher = Pusher;
@@ -61,8 +67,8 @@ window.Echo = new Echo({
     broadcaster: 'reverb',
     key: <?php echo json_encode(env('REVERB_APP_KEY'), 15, 512) ?>,
     wsHost: <?php echo json_encode(env('REVERB_HOST', 'localhost'), 512) ?>,
-    wsPort: <?php echo e(env('REVERB_PORT', 8080)); ?>,
-    wssPort: <?php echo e(env('REVERB_PORT', 8080)); ?>,
+    wsPort: <?php echo json_encode((int) (env('REVERB_PORT') ?: 8080), 15, 512) ?>,
+    wssPort: <?php echo json_encode((int) (env('REVERB_PORT') ?: 8080), 15, 512) ?>,
     forceTLS: <?php echo json_encode(env('REVERB_SCHEME', 'http') === 'https', 512) ?>,
     enabledTransports: ['ws', 'wss'],
     authEndpoint: '/broadcasting/auth',
@@ -89,7 +95,7 @@ function renderMessage(msg) {
             ${escapeHtml(msg.content)}
         </span>
     </div>`;
-}
+} 
 
 function removeMessageById(id) {
     messageIds.delete(id);
@@ -144,27 +150,82 @@ function subscribeToGroup(groupId) {
         });
 }
 
+function setExcludeDropdownEnabled(enabled) {
+    const dropdown = document.getElementById('exclude-dropdown');
+    dropdown.style.opacity = enabled ? '1' : '0.6';
+    dropdown.style.pointerEvents = enabled ? 'auto' : 'none';
+    if (!enabled) {
+        closeExcludeDropdown();
+    }
+}
+
+function updateExcludeToggleLabel() {
+    const count = getSelectedExcludedUserIds().length;
+    const toggle = document.getElementById('exclude-toggle');
+    toggle.textContent = count > 0 ? `Exclude members (${count}) ▾` : 'Exclude members ▾';
+}
+
+function toggleExcludeDropdown() {
+    const menu = document.getElementById('exclude-menu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function closeExcludeDropdown() {
+    document.getElementById('exclude-menu').style.display = 'none';
+}
+
+function getSelectedExcludedUserIds() {
+    return Array.from(document.querySelectorAll('#exclude-checkboxes input[type="checkbox"]:checked'))
+        .map(checkbox => Number(checkbox.value))
+        .filter(Boolean);
+}
+
 function populateMemberOptions(groupId) {
-    const select = document.getElementById('exclude-select');
-    select.innerHTML = '<option value="">Exclude member</option>';
-    select.disabled = true;
+    const container = document.getElementById('exclude-checkboxes');
+    container.innerHTML = '';
+    setExcludeDropdownEnabled(false);
+    updateExcludeToggleLabel();
 
     const group = groupsData.find(item => Number(item.id) === Number(groupId));
     currentGroupMembers = group?.members || [];
 
     const members = currentGroupMembers.filter(member => Number(member.id) !== authUserId);
+    if (members.length === 0) {
+        container.innerHTML = '<span style="color:var(--muted);">No other members</span>';
+        updateExcludeToggleLabel();
+        return;
+    }
+
     members.forEach(member => {
-        const option = document.createElement('option');
-        option.value = String(member.id);
-        option.textContent = member.name;
-        select.appendChild(option);
+        const label = document.createElement('label');
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.gap = '6px';
+        label.style.cursor = 'pointer';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = String(member.id);
+        checkbox.className = 'exclude-member-checkbox';
+        checkbox.addEventListener('change', updateExcludeToggleLabel);
+
+        const name = document.createElement('span');
+        name.textContent = member.name;
+
+        label.appendChild(checkbox);
+        label.appendChild(name);
+        container.appendChild(label);
     });
 
-    select.disabled = false;
+    setExcludeDropdownEnabled(true);
+    updateExcludeToggleLabel();
 }
 
- document.getElementById('exclude-select').addEventListener('change', function (event) {
-    selectedExcludedUserId = event.target.value || null;
+document.addEventListener('click', (event) => {
+    const dropdown = document.getElementById('exclude-dropdown');
+    if (!dropdown.contains(event.target)) {
+        closeExcludeDropdown();
+    }
 });
 
 function openGroup(groupId, groupName) {
@@ -173,10 +234,9 @@ function openGroup(groupId, groupName) {
     document.getElementById('chat-header').innerText = groupName;
     document.getElementById('message-input').disabled = false;
     document.getElementById('send-btn').disabled = false;
-    const excludeSelect = document.getElementById('exclude-select');
-    selectedExcludedUserId = null;
-    excludeSelect.value = '';
-    excludeSelect.disabled = true;
+    setExcludeDropdownEnabled(false);
+    document.getElementById('exclude-checkboxes').innerHTML = '<span style="color:var(--muted);">Loading...</span>';
+    updateExcludeToggleLabel();
     const topicsLink = document.getElementById('topics-link');
     topicsLink.href = '/groups/' + groupId + '/topics';
     topicsLink.style.display = 'inline-block';
@@ -188,17 +248,6 @@ function openGroup(groupId, groupName) {
     loadMessages(groupId);
     populateMemberOptions(groupId);
     subscribeToGroup(groupId);
-
-
-    if (pollingTimer) {
-        clearInterval(pollingTimer);
-    }
-
-    pollingTimer = setInterval(() => {
-        if (currentGroupId) {
-            loadMessages(currentGroupId);
-        }
-    }, 3000);
 }
 
 function sendMessage() {
@@ -209,7 +258,7 @@ function sendMessage() {
     input.disabled = true;
     document.getElementById('send-btn').disabled = true;
 
-    const excludedUserIds = selectedExcludedUserId ? [Number(selectedExcludedUserId)].filter(Boolean) : [];
+    const excludedUserIds = getSelectedExcludedUserIds();
 
     const tempMessage = {
         id: `temp-${Date.now()}-${tempMessageCounter++}`,
