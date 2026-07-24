@@ -23,6 +23,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/messages/send', [MessageController::class, 'send'])->middleware('not_blacklisted');
     Route::get('/messages/group/{groupId}', [MessageController::class, 'getMessages']);
 
+    // Groups (my groups)
+    Route::get('/groups', function (Request $request) {
+        return response()->json($request->user()->groups()->orderBy('name')->get());
+    });
+
+    //Quizzes
+    Route::get('/quizzes', [\App\Http\Controllers\QuizController::class, 'listCheck']);
+    Route::get('/quizzes/{id}/questions', function ($id) {
+    $quiz = \App\Models\Quiz::with('questions')->findOrFail($id);
+    return response()->json($quiz->questions);
+    });
+    Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/quizzes',[\App\Http\Controllers\QuizController::class, 'apiStore']);
+});
     // Direct messages
     Route::post('/direct-messages/send', [DirectMessageController::class, 'send'])->middleware('not_blacklisted');
     Route::get('/direct-messages/{userId}', [DirectMessageController::class, 'getConversation']);
