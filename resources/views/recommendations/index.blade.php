@@ -1,9 +1,5 @@
 @extends('layouts.app')
 
-@section('header')
-    <h2 class="screen-title" style="color:var(--text);">Recommended for you</h2>
-@endsection
-
 @section('content')
 <div class="page-card" style="max-width:1100px; margin:30px auto; padding:30px; border-radius:18px; box-shadow:0 18px 40px rgba(15,23,42,0.08);">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:24px;">

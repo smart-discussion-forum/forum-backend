@@ -1,18 +1,14 @@
- @extends('layouts.app')
-
-@section('header')
-    <h2 class="screen-title" style="color:var(--text);">My Dashboard</h2>
-@endsection
+@extends('layouts.app')
 
 @section('content')
 <div class="page-card" style="max-width:980px; margin:30px auto; padding:30px;">
-
+    <h2 class="screen-title" style="color:var(--text); text-align:left; margin:0 0 8px;">My Dashboard</h2>
     <p style="color:var(--muted); margin-bottom:24px;">
         Welcome back, {{ auth()->user()->name }}. You're signed in as
         <span style="color:var(--text); font-weight:600;">Student</span>.
     </p>
 
-    <div class="page-card" style="margin:0 0 24px; padding:18px;">
+    <div style="margin:0 0 24px; padding:18px; border:1px solid rgba(148,163,184,0.22); border-radius:16px; background:rgba(255,255,255,0.55);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="color:var(--text); font-weight:600; font-size:1.125rem; margin:0;">Your groups</h3>
             <a href="{{ route('groups.index') }}" class="dash-btn" style="margin:0; padding:8px 14px; font-size:0.875rem;">Browse / join a group</a>

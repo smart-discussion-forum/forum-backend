@@ -24,7 +24,6 @@
                 <option value="Admin">Admin</option>
             </select>
 
-
             <label><input type="checkbox" name="accepted_terms" value="1" style="width:auto;" @checked(old('accepted_terms'))> Accept Rules</label>
             @error('accepted_terms') <div class="error">{{ $message }}</div> @enderror
 

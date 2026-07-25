@@ -74,7 +74,7 @@ class AuthController extends Controller
         auth()->login($user);
         session(['api_token' => $user->createToken('web_token')->plainTextToken]);
 
-        return redirect('/dashboard');
+        return redirect()->route('groups.index');
     }
 
     public function login(Request $request)

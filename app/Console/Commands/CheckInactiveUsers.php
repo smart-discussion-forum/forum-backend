@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\RoleEnum;
 use App\Enums\StatusEnum;
 use App\Models\Blacklist;
 use App\Models\User;
@@ -14,35 +15,90 @@ class CheckInactiveUsers extends Command
 {
     protected $signature = 'moderation:check-inactive-users';
 
-    protected $description = 'Warn and temporarily blacklist users who have not communicated for a long time (SDD requirement #4).';
+    protected $description = 'Warn (twice) then temporarily blacklist users who have not communicated for a long time.';
 
     public function handle(): int
     {
-        $inactivityDays = (int) config('moderation.inactivity_warning_days');
-        $complianceDays = (int) config('moderation.compliance_window_days');
+        $reinstated = $this->reinstateExpiredBlacklists();
+
+        $firstWarningDays = (int) config('moderation.inactivity_first_warning_days');
+        $secondWarningDays = (int) config('moderation.inactivity_second_warning_days');
+        $blacklistAfterDays = (int) config('moderation.inactivity_blacklist_after_days');
         $blacklistDays = (int) config('moderation.blacklist_duration_days');
 
-        $cutoff = now()->subDays($inactivityDays);
+        $cutoff = now()->subDays($firstWarningDays);
 
-        $candidates = User::where('status', '!=', StatusEnum::Blacklisted)
+        $candidates = User::query()
+            ->where('role', RoleEnum::Student)
+            ->where('status', '!=', StatusEnum::Blacklisted)
             ->where(function ($query) use ($cutoff) {
                 $query->whereNull('last_active')->orWhere('last_active', '<=', $cutoff);
             })
             ->get();
 
+        $warned = 0;
+        $blacklisted = 0;
+
         foreach ($candidates as $user) {
-            $this->processUser($user, $complianceDays, $blacklistDays);
+            $result = $this->processUser($user, $secondWarningDays, $blacklistAfterDays, $blacklistDays);
+
+            if ($result === 'warned') {
+                $warned++;
+            } elseif ($result === 'blacklisted') {
+                $blacklisted++;
+            }
         }
 
-        $this->info("Checked {$candidates->count()} inactive user(s).");
+        $this->info("Checked {$candidates->count()} inactive user(s). Warned: {$warned}. Blacklisted: {$blacklisted}. Reinstated: {$reinstated}.");
 
         return self::SUCCESS;
     }
 
-    private function processUser(User $user, int $complianceDays, int $blacklistDays): void
+    /**
+     * Lift expired temporary blacklists so the configured duration is enforced.
+     */
+    private function reinstateExpiredBlacklists(): int
     {
+        $expiredUserIds = Blacklist::query()
+            ->whereNotNull('Expires_at')
+            ->where('Expires_at', '<=', now())
+            ->pluck('User_id')
+            ->unique();
+
+        $count = 0;
+
+        foreach ($expiredUserIds as $userId) {
+            $hasActive = Blacklist::query()
+                ->where('User_id', $userId)
+                ->where(function ($query) {
+                    $query->whereNull('Expires_at')
+                        ->orWhere('Expires_at', '>', now());
+                })
+                ->exists();
+
+            if ($hasActive) {
+                continue;
+            }
+
+            $user = User::find($userId);
+            if ($user && $user->status === StatusEnum::Blacklisted) {
+                $user->status = StatusEnum::Active;
+                $user->save();
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    private function processUser(
+        User $user,
+        int $secondWarningDays,
+        int $blacklistAfterDays,
+        int $blacklistDays
+    ): ?string {
         // Only count auto-inactivity warnings issued since the user's last
-        // known activity. Once last_active moves forward (they come back),
+        // known activity. Once last_active moves forward (they communicate),
         // older warnings stop counting for this streak automatically.
         $sinceActivity = $user->last_active ?? now()->subYears(10);
 
@@ -54,34 +110,40 @@ class CheckInactiveUsers extends Command
 
         $warningCount = $activeWarnings->count();
 
+        // First warning: inactive for the configured first-warning period.
         if ($warningCount === 0) {
-            $this->issueInactivityWarning($user);
-            return;
+            $this->issueInactivityWarning($user, 1);
+            return 'warned';
         }
 
         $lastWarning = $activeWarnings->last();
+        $lastIssuedAt = $lastWarning->Issued_at;
 
-        // Give the user the full compliance window after their most recent
-        // warning before escalating to the next step.
-        if ($lastWarning->Issued_at->gt(now()->subDays($complianceDays))) {
-            return;
-        }
-
+        // Second warning: still inactive after the gap following the first warning.
         if ($warningCount === 1) {
-            $this->issueInactivityWarning($user);
-            return;
+            if ($lastIssuedAt->gt(now()->subDays($secondWarningDays))) {
+                return null;
+            }
+
+            $this->issueInactivityWarning($user, 2);
+            return 'warned';
         }
 
-        // 2+ auto-inactivity warnings, still inactive after the compliance
-        // window expired: blacklist for the configured duration.
+        // Blacklist: still inactive one configured day after the second warning.
+        if ($lastIssuedAt->gt(now()->subDays($blacklistAfterDays))) {
+            return null;
+        }
+
         $this->blacklistForInactivity($user, $blacklistDays);
+
+        return 'blacklisted';
     }
 
-    private function issueInactivityWarning(User $user): void
+    private function issueInactivityWarning(User $user, int $number): void
     {
         $warning = Warning::create([
             'User_id' => $user->id,
-            'Reason' => 'Inactivity: no communication on the platform for an extended period.',
+            'Reason' => "Automatic inactivity warning #{$number}: no communication on the platform for an extended period.",
             'Issued_at' => now(),
             'Source' => Warning::SOURCE_AUTO_INACTIVITY,
         ]);
@@ -93,7 +155,7 @@ class CheckInactiveUsers extends Command
     {
         $blacklist = Blacklist::create([
             'User_id' => $user->id,
-            'Reason' => 'Automatically blacklisted for continued inactivity after 2 warnings and no response within the compliance window.',
+            'Reason' => "Automatically blacklisted for {$blacklistDays} day(s) after 2 inactivity warnings with no response.",
             'Blacklisted_at' => now(),
             'Expires_at' => now()->addDays($blacklistDays),
         ]);

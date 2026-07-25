@@ -47,6 +47,7 @@ class PostController extends Controller
         ]);
 
         $post->load('user:id,name', 'topic:id,group_id');
+        $user->touchLastActive();
 
         broadcast(new NewPostCreated($post))->toOthers();
 
