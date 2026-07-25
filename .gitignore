@@ -1,1 +1,4 @@
-storage/logs/*.logss
+storage/logs/*.logs
+storage/framework/views/*.php
+storage/framework/cache/*
+storage/framework/sessions/*
