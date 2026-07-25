@@ -23,6 +23,8 @@ class DirectMessageController extends Controller
             'message' => $request->message,
         ]);
 
+        $user->touchLastActive();
+
         return response()->json([
             'success' => true,
             'message' => $message,

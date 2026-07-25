@@ -11,6 +11,16 @@
                 <a href="{{ route('chat', ['group' => $group->id]) }}" class="dash-btn">Back to Chat</a>
                 <a href="/groups/{{ $group->id }}/topics/create" class="dash-btn">New Topic</a>
             </div>
+    <div class="page-card" style="max-width:1180px; margin:24px auto; padding:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div class="screen-title" style="margin:0; color:var(--text);">{{ $group->name }} — Topics</div>
+            <a href="/chat?group={{ $group->id }}" class="dash-btn">Back to Group Chat</a>
+        </div>
+        <p style="text-align:center; color:var(--muted); margin-top:0; margin-bottom:22px;">Browse topic summaries, see the latest discussion snippet, and jump into a thread.</p>
+        <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
+            @if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true))
+                <a href="/groups/{{ $group->id }}/topics/create" class="dash-btn">New topic</a>
+            @endif
         </div>
 
         <div class="topic-list" style="margin-top:22px;">

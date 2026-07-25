@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RoleEnum;
 use App\Events\NewPostCreated;
 use App\Models\Topic;
 use App\Models\Post;
 use App\Models\Group;
+use App\Models\ParticipationMark;
 use App\Notifications\NewTopicPosted;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -18,6 +20,14 @@ class TopicController extends Controller
     {
         if (! auth()->user()->groups()->where('groups.id', $groupId)->exists()) {
             abort(403, 'You are not a member of this group.');
+        }
+    }
+
+    private function assertLecturer()
+    {
+        $role = auth()->user()?->role;
+        if (! in_array($role, [RoleEnum::Lecturer, RoleEnum::Admin], true)) {
+            abort(403, 'Only lecturers can create topics.');
         }
     }
 
@@ -64,6 +74,7 @@ class TopicController extends Controller
 
     public function groupCreate($groupId)
     {
+        $this->assertLecturer();
         $this->assertMember($groupId);
 
         $group = Group::findOrFail($groupId);
@@ -73,6 +84,7 @@ class TopicController extends Controller
 
     public function groupStore(Request $request, $groupId)
     {
+        $this->assertLecturer();
         $this->assertMember($groupId);
 
         $data = $request->validate([
@@ -147,6 +159,8 @@ class TopicController extends Controller
         ]);
 
         $post->load('user:id,name', 'topic:id,group_id');
+        auth()->user()?->touchLastActive();
+        ParticipationMark::awardForUserInGroup((int) auth()->id(), (int) $groupId);
 
         try {
             broadcast(new NewPostCreated($post))->toOthers();

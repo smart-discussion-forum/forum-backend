@@ -4,7 +4,9 @@
         <div class="screen-title" style="color:var(--text); margin-bottom:8px;">Profile</div>
         <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
             <a href="/dashboard" class="dash-btn">Dashboard</a>
-            <a href="/chat" class="dash-btn">Group Chat</a>
+            @if($user->role !== \App\Enums\RoleEnum::Admin)
+                <a href="/chat" class="dash-btn">Group Chat</a>
+            @endif
             <a href="/quizzes" class="dash-btn">Quizzes</a>
         </div>
 

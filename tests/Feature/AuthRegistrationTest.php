@@ -12,17 +12,12 @@ class AuthRegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_users_can_register_with_multiple_groups(): void
+    public function test_users_can_register_without_selecting_groups(): void
     {
         $creator = User::factory()->create();
-        $groupOne = Group::create([
+        Group::create([
             'name' => 'Group One',
             'description' => 'First group',
-            'created_by' => $creator->id,
-        ]);
-        $groupTwo = Group::create([
-            'name' => 'Group Two',
-            'description' => 'Second group',
             'created_by' => $creator->id,
         ]);
 
@@ -31,17 +26,35 @@ class AuthRegistrationTest extends TestCase
             'email' => 'alice@example.com',
             'password' => 'password123',
             'role' => 'student',
-            'group_ids' => [$groupOne->id, $groupTwo->id],
             'accepted_terms' => '1',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect('/groups');
 
         $user = User::where('email', 'alice@example.com')->firstOrFail();
 
-        $this->assertCount(2, $user->groups()->pluck('groups.id'));
-        $this->assertTrue($user->groups()->where('groups.id', $groupOne->id)->exists());
-        $this->assertTrue($user->groups()->where('groups.id', $groupTwo->id)->exists());
+        $this->assertCount(0, $user->groups()->pluck('groups.id'));
+    }
+
+    public function test_authenticated_users_can_join_and_leave_groups(): void
+    {
+        $creator = User::factory()->create();
+        $group = Group::create([
+            'name' => 'Group One',
+            'description' => 'First group',
+            'created_by' => $creator->id,
+        ]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        $joinResponse = $this->post('/groups/' . $group->id . '/join');
+        $joinResponse->assertRedirect();
+        $this->assertTrue($user->fresh()->groups()->where('groups.id', $group->id)->exists());
+
+        $leaveResponse = $this->post('/groups/' . $group->id . '/leave');
+        $leaveResponse->assertRedirect();
+        $this->assertFalse($user->fresh()->groups()->where('groups.id', $group->id)->exists());
     }
 
     public function test_user_can_reset_password_directly_from_forgot_password_page(): void

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\MessageSent;
 use App\Models\Message;
+use App\Models\MessageExclusion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,8 @@ class MessageController extends Controller
         $request->validate([
             'group_id' => 'required|exists:groups,id',
             'content' => 'required|string',
+            'excluded_user_ids' => 'sometimes|array',
+            'excluded_user_ids.*' => 'integer|exists:users,id',
         ]);
 
         $user = Auth::user();
@@ -29,6 +32,21 @@ class MessageController extends Controller
             'content' => $request->content,
             'sent_at' => now(),
         ]);
+
+        $user->touchLastActive();
+
+        $excludedIds = collect($request->input('excluded_user_ids', []))
+            ->filter(fn ($id) => (int) $id !== $user->id)
+            ->unique()
+            ->values();
+
+        foreach ($excludedIds as $excludedUserId) {
+            MessageExclusion::create([
+                'message_id' => $message->id,
+                'excluded_user_id' => $excludedUserId,
+            ]);
+        }
+
         $message->load('sender');
 
         try {

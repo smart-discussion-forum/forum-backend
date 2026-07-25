@@ -9,22 +9,22 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function index(Request $request): View
+    {
+        $user = $request->user();
 
-  public function index(Request $request): View
-{
-    $user = $request->user();
-
-    return match ($user->role) {
-        RoleEnum::Admin => view('dashboard.admin', [
-            'groupCount'   => Group::where('created_by', $user->id)->count(),
-            'flaggedCount' => 0, // TODO: wire up once post moderation/flagging exists
-        ]),
+        return match ($user->role) {
+            RoleEnum::Admin => view('dashboard.admin'),
             RoleEnum::Lecturer => view('dashboard.lecturer', [
-                'myGroups' => Group::where('created_by', $user->id)
-                    ->withCount(['members', 'quizzes'])
+                'myGroups' => Group::query()
+                    ->where(function ($query) use ($user) {
+                        $query->where('created_by', $user->id)
+                            ->orWhereIn('id', $user->groups()->pluck('groups.id'));
+                    })
+                    ->orderBy('name')
                     ->get(),
             ]),
-        default => view('dashboard'),
-    };
-}
+            default => view('dashboard'),
+        };
+    }
 }

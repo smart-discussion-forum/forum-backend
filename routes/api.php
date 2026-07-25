@@ -12,6 +12,7 @@ use App\Http\Controllers\DirectMessageController;
 use App\Http\Controllers\RecommendationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GroupController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -22,7 +23,24 @@ Route::post('/login', [AuthController::class, 'apiLogin']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/messages/send', [MessageController::class, 'send'])->middleware('not_blacklisted');
     Route::get('/messages/group/{groupId}', [MessageController::class, 'getMessages']);
+    Route::post('/quizzes',[\App\Http\Controllers\QuizController::class, 'apiStore']);
+   //Browse all groups (mine + joinable)
+   Route::get('/groups/browse', [GroupController::class, 'browse']);
+   Route::post('/groups/{id}/join', [GroupController::class, 'join']);
+   Route::post('/groups/{id}/leave', [GroupController::class, 'leave']);
+   
+    // Groups (my groups)
+    Route::get('/groups', function (Request $request) {
+        return response()->json($request->user()->groups()->orderBy('name')->get());
+    });
 
+    //Quizzes
+    Route::get('/quizzes', [\App\Http\Controllers\QuizController::class, 'listCheck']);
+    Route::get('/quizzes/{id}/questions', function ($id) {
+    $quiz = \App\Models\Quiz::with('questions')->findOrFail($id);
+    return response()->json($quiz->questions);
+    });
+        
     // Direct messages
     Route::post('/direct-messages/send', [DirectMessageController::class, 'send'])->middleware('not_blacklisted');
     Route::get('/direct-messages/{userId}', [DirectMessageController::class, 'getConversation']);
@@ -51,7 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Topics
     Route::get('/topics/search', [TopicController::class, 'search']);
     Route::get('/groups/{groupId}/topics', [TopicController::class, 'index']);
-    Route::post('/groups/{groupId}/topics', [TopicController::class, 'store'])->middleware('not_blacklisted');
+    Route::post('/groups/{groupId}/topics', [TopicController::class, 'store'])->middleware(['lecturer', 'not_blacklisted']);
     Route::get('/topics/{topicId}', [TopicController::class, 'show']);
 
     // Posts

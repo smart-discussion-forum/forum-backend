@@ -44,7 +44,7 @@ class User extends Authenticatable
 
     public function topics()
     {
-        return $this->hasMany(Topic::class);
+        return $this->hasMany(Topic::class, 'created_by');
     }
     public function sentMessages()
 {
@@ -54,6 +54,15 @@ class User extends Authenticatable
     public function warnings()
     {
         return $this->hasMany(Warning::class, 'User_id');
+    }
+
+    /**
+     * Mark the user as having communicated recently so the automatic
+     * inactivity warning / blacklist streak resets.
+     */
+    public function touchLastActive(): void
+    {
+        $this->forceFill(['last_active' => now()])->save();
     }
 
     public function blacklistEntries()

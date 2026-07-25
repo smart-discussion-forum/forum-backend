@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\ParticipationMark;
-use App\Models\Post;
 use App\Models\User;
 use App\Enums\RoleEnum;
 use Illuminate\Http\Request;
@@ -56,12 +55,29 @@ public function create()
         return response()->json($group);
     }
 
+    public function browse(Request $request)
+{
+    $user = Auth::user();
+
+    $myGroups = $user->groups()->get();
+    $myGroupIds = $myGroups->pluck('id');
+
+    $joinableGroups = Group::whereNotIn('id', $myGroupIds)
+        ->withCount('members')
+        ->get();
+
+    return response()->json([
+        'myGroups' => $myGroups,
+        'joinableGroups' => $joinableGroups,
+    ]);
+}
+
 public function join(Request $request, $id)
 {
     $group = Group::findOrFail($id);
     $user = Auth::user();
     if ($group->members()->where('user_id', $user->id)->exists()) {
-        if ($request->ajax() && $request->wantsJson()) {
+        if ($request->wantsJson()) {
             return response()->json(['message' => 'You already belong to this group.'], 409);
         }
 
@@ -72,6 +88,10 @@ public function join(Request $request, $id)
         'joined_at' => now(),
     ]);
 
+    if ($request->wantsJson()) {
+        return response()->json(['message' => 'Joined group successfully.'], 200);
+    }
+
     return redirect()->route('groups.index')->with('success', 'Joined group successfully.');
 }
 
@@ -79,14 +99,20 @@ public function leave(Request $request, $id)
 {
     $group = Group::findOrFail($id);
     $user = Auth::user();
+
     if (! $group->members()->where('user_id', $user->id)->exists()) {
-        if ($request->ajax() && $request->wantsJson()) {
+        if ($request->wantsJson()) {
             return response()->json(['message' => 'You are not a member of this group.'], 409);
         }
 
         return redirect()->route('groups.index')->with('error', 'You are not a member of this group.');
     }
     $group->members()->detach($user->id);
+
+        if ($request->wantsJson()) {
+        return response()->json(['message' => 'Left group successfully.'], 200);
+    }
+
 
     return redirect()->route('groups.index')->with('success', 'Left group successfully.');
 }
@@ -100,129 +126,91 @@ public function leave(Request $request, $id)
             abort(403);
         }
 
+        $role = $currentUser->role?->value;
+        if (! in_array($role, ['Lecturer', 'Admin'], true)) {
+            abort(403, 'Participation marks are only available to lecturers.');
+        }
+
         $allowedGroupIds = collect();
-        if ($currentUser->role?->value === 'Admin') {
+        if ($role === 'Admin') {
             $allowedGroupIds = Group::pluck('id');
-        } elseif ($currentUser->role?->value === 'Lecturer') {
+        } else {
             $allowedGroupIds = $currentUser->createdGroups()->pluck('groups.id')
                 ->merge($currentUser->groups()->pluck('groups.id'));
-        } else {
-            $allowedGroupIds = $currentUser->groups()->pluck('groups.id');
         }
 
 if (! $allowedGroupIds->contains($group->id)) {
             abort(403);
         }
 
-        $selectedGroupId = $request->query('group_id', $group->id);
-        $selectedGroup = Group::with(['creator'])->find($selectedGroupId);
+        $studentCount = $group->members()
+            ->where('users.role', 'student')
+            ->count();
 
-        if (! $selectedGroup || ! $allowedGroupIds->contains($selectedGroup->id)) {
-            $selectedGroup = $group;
-        }
-
-        $memberCount = $selectedGroup->members()->count();
-        $topicCount = $selectedGroup->topics()->count();
-        $messageCount = $selectedGroup->messages()->count();
-
-        $postCount = $selectedGroup->topics()
+        $topicCount = $group->topics()->count();
+        $messageCount = $group->messages()->count();
+        $postCount = $group->topics()
             ->withCount('posts')
             ->get()
             ->sum('posts_count');
 
-        $membersByRole = $selectedGroup->members()
+        $sortBy = $request->query('sort_by', 'participation_score');
+        $sortOrder = $request->query('sort_order', 'desc');
+
+        $participationRows = $group->members()
+            ->select('users.id', 'users.name', 'users.email', 'users.last_active', 'users.role')
+            ->where('users.role', 'student')
+            ->withCount(['posts' => function ($query) use ($group) {
+                $query->whereHas('topic', function ($topicQuery) use ($group) {
+                    $topicQuery->where('group_id', $group->id);
+                });
+            }])
             ->get()
-            ->groupBy('pivot.role')
-            ->map(fn ($members) => $members->count());
+            ->map(function ($member) use ($group) {
+                $memberPostCount = (int) $member->posts_count;
+                $mark = ParticipationMark::awardForUserInGroup((int) $member->id, (int) $group->id);
 
-        $visibleGroups = Group::query()    
-            ->when($currentUser->role?->value === 'Lecturer', function ($query) use ($currentUser) {
-                $query->whereIn('id', $currentUser->createdGroups()->pluck('groups.id')->merge($currentUser->groups()->pluck('groups.id')));
+                return [
+                    'user_id' => $member->id,
+                    'name' => $member->name,
+                    'email' => $member->email,
+                    'post_count' => $memberPostCount,
+                    'participation_score' => round((float) ($mark?->score ?? 0), 2),
+                    'activity_status' => $this->activityStatus($member),
+                ];
             })
-            ->when($currentUser->role?->value === 'student', function ($query) use ($currentUser) {
-                $query->whereIn('id', $currentUser->groups()->pluck('groups.id'));
-            })
-            ->orderBy('name')
-            ->get();
+            ->values();
 
-        $participationRows = collect();
-        if ($selectedGroup) {
-            $participationRows = $selectedGroup->members()
-                ->select('users.id', 'users.name', 'users.email', 'users.last_active')
-                ->withCount(['posts' => function ($query) use ($selectedGroup) {
-                    $query->whereHas('topic', function ($topicQuery) use ($selectedGroup) {
-                        $topicQuery->where('group_id', $selectedGroup->id);
-                    });
-                }])
-                ->get()
-                ->map(function ($member) use ($selectedGroup) {
-                    $postCount = (int) $member->posts_count;
-                    
-                    $dbScore = ParticipationMark::where('user_id', $member->id)
-                        ->where('group_id', $selectedGroup->id)
-                        ->value('score');
-                    
-                    $score = $dbScore ?? (($postCount * 2.5) + (rand(0, 30)));
+        $sortMap = [
+            'name' => 'name',
+            'post_count' => 'post_count',
+            'participation_score' => 'participation_score',
+            'activity_status' => 'activity_status',
+        ];
+        $sortKey = $sortMap[$sortBy] ?? 'participation_score';
 
-                    return [
-                        'user_id' => $member->id,
-                        'name' => $member->name,
-                        'email' => $member->email,
-                        'post_count' => $postCount,
-                        'participation_score' => round((float) $score, 2),
-                        'activity_status' => $this->activityStatus($member),
-                    ];
-                })
-                ->values();
-
-            $sortBy = $request->query('sort_by', 'participation_score');
-            $sortOrder = $request->query('sort_order', 'desc');
-
-            $sortMap = [
-                'name' => 'name',
-                'post_count' => 'post_count',
-                'participation_score' => 'participation_score',
-                'activity_status' => 'activity_status',
-            ];
-
-            $sortKey = $sortMap[$sortBy] ?? 'participation_score';
-
-            if ($sortOrder === 'asc') {
-                $participationRows = $participationRows->sortBy($sortKey)->values();
-            } else {
-                $participationRows = $participationRows->sortByDesc($sortKey)->values();
-            }
-            
-            if ($currentUser->role?->value === 'student') {
-                $participationRows = $participationRows->filter(fn ($row) => $row['user_id'] === $currentUser->id)->values();
-            } elseif ($currentUser->role?->value === 'Lecturer') {
-                $topicIds = $selectedGroup->topics()->pluck('id');
-                if ($topicIds->isNotEmpty()) {
-                    $studentIds = Post::whereIn('topic_id', $topicIds)
-                        ->pluck('user_id')
-                        ->unique()
-                        ->merge($selectedGroup->members()->pluck('users.id'))
-                        ->unique();
-                    $participationRows = $participationRows->filter(fn ($row) => $studentIds->contains($row['user_id']))->values();
-                }
-            }
+        if ($sortOrder === 'asc') {
+            $participationRows = $participationRows->sortBy($sortKey)->values();
+        } else {
+            $participationRows = $participationRows->sortByDesc($sortKey)->values();
         }
 
-            return view('groups.statistics', [
-            'group_name' => $selectedGroup->name,
-            'created_by' => $selectedGroup->creator?->name,
-            'member_count' => $memberCount,
+        $averageScore = $participationRows->avg('participation_score') ?? 0;
+        $topScore = $participationRows->max('participation_score') ?? 0;
+
+        return view('groups.statistics', [
+            'group_name' => $group->name,
+            'created_by' => $group->creator?->name,
+            'student_count' => $studentCount,
             'topic_count' => $topicCount,
             'post_count' => $postCount,
             'message_count' => $messageCount,
-            'members_by_role' => $membersByRole,
-            'visible_groups' => $visibleGroups,
-            'selected_group_id' => $selectedGroup->id,
+            'average_score' => round((float) $averageScore, 1),
+            'top_score' => round((float) $topScore, 1),
+            'selected_group_id' => $group->id,
             'participation_rows' => $participationRows,
-            'can_view_all' => $currentUser->role?->value === 'Admin',
-            'current_user' => $currentUser,
-            'sort_by' => $request->query('sort_by', 'participation_score'),
-            'sort_order' => $request->query('sort_order', 'desc'),
+            'sort_by' => $sortBy,
+            'sort_order' => $sortOrder,
         ]);
     }
 
@@ -292,3 +280,4 @@ if (! $allowedGroupIds->contains($group->id)) {
             return redirect()->route('groups.manage')->with('success', 'Group deleted successfully.');
         }
 }
+
