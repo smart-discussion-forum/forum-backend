@@ -8,6 +8,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
             <div class="screen-title" style="margin:0; text-align:left; color:var(--text);">{{ $group->name }}</div>
             <a href="/chat?group={{ $group->id }}" class="dash-btn">Back to Group Chat</a>
+            <a href="{{ route('topics.export-pdf', ['groupId' => $group->id, 'id' => $topic->id]) }}" class="dash-btn">Export as PDF</a>
         </div>
         <div class="discussion-shell">
             <aside class="discussion-sidebar">

@@ -23,10 +23,6 @@ class Warning extends Model
         'Source',
     ];
 
-    protected $casts = [
-        'Issued_at' => 'datetime',
-    ];
-
     public $timestamps = false;
 
     // A warning belongs to a user
@@ -53,4 +49,3 @@ class Warning extends Model
         return $query->where('Source', self::SOURCE_AUTO_INACTIVITY);
     }
 }
-

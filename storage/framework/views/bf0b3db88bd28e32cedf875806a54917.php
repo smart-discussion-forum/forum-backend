@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title><?php echo $__env->yieldContent('title', 'Mindshare Discussion Forum'); ?></title>
+    <style>
+        *, *::before, *::after {
+                box-sizing: border-box;
+            }
+            html, body {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+        :root {
+            --bg-0: #0b1020;
+            --bg-1: #11192d;
+            --glass: rgba(238, 242, 247, 0.84);
+            --glass-strong: rgba(226, 232, 240, 0.94);
+            --line: rgba(148, 163, 184, 0.22);
+            --text: #101827;
+            --muted: #5b6476;
+            --accent: #4f7ca8;
+            --accent-strong: #2f5f84;
+            --accent-soft: #c9d9e8;
+            --shadow: 0 24px 60px rgba(0, 0, 0, 0.26);
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(63, 114, 175, 0.45), transparent 24%),
+                radial-gradient(circle at 80% 18%, rgba(40, 167, 188, 0.35), transparent 20%),
+                radial-gradient(circle at 75% 82%, rgba(145, 92, 182, 0.22), transparent 22%),
+                linear-gradient(160deg, #0b1020 0%, #1a2338 55%, #2e3a56 100%);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+        }
+    .navbar {
+        background: rgba(10, 15, 28, 0.78);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(18px);
+        padding: 14px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        position: relative;
+        z-index: 100;
+    }
+    .navbar .nav-links {
+        display: flex;
+        gap: 22px;
+        flex-wrap: wrap;
+    }
+    .navbar .nav-links a.active {
+        text-decoration: underline;
+    }
+    .navbar a {
+        color: rgba(255, 255, 255, 0.92);
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .navbar a:hover {
+        text-decoration: underline;
+    }
+        .nav-logout {
+            background: linear-gradient(135deg, #58779e, #355172);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+        }
+        .nac-logout:hover {
+            opacity: 0.95;
+        }
+        .user-menu-container {
+            position: relative;
+        }
+        .user-profile-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f7ca8, #2f5f84);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+        }
+        .user-profile-btn:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+        .user-dropdown {
+            position: fixed;
+            top: 54px;
+            right: 28px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(18px);
+            min-width: 180px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            display: none;
+            flex-direction: column;
+            z-index: 10000;
+        }
+        .user-dropdown.active {
+            display: flex;
+        }
+        .user-dropdown a,
+        .user-dropdown form {
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.15s ease;
+            display: block;
+        }
+        .user-dropdown a:last-child,
+        .user-dropdown form:last-child {
+            border-bottom: none;
+        }
+        .user-dropdown a:hover,
+        .user-dropdown form:hover {
+            background: rgba(79, 124, 168, 0.3);
+        }
+        .user-dropdown button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.15s ease;
+        }
+        .user-dropdown form button:hover {
+            background: rgba(79, 124, 168, 0.3);
+        }
+        .user-dropdown .user-info {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .nav-right-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .notif-bell-container {
+            position: relative;
+        }
+        .notif-bell-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.92);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+        }
+        .notif-bell-btn:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+        .notif-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 2px solid rgba(10, 15, 28, 0.9);
+        }
+        .notif-dropdown {
+            position: fixed;
+            top: 54px;
+            right: 84px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(18px);
+            width: 320px;
+            max-height: 420px;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            display: none;
+            flex-direction: column;
+            z-index: 10000;
+        }
+        .notif-dropdown.active {
+            display: flex;
+        }
+        .notif-dropdown-header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 700;
+        }
+        .notif-dropdown-header button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .notif-dropdown-header button:hover {
+            color: rgba(255, 255, 255, 0.95);
+        }
+        .notif-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .notif-item:last-child {
+            border-bottom: none;
+        }
+        .notif-item:hover {
+            background: rgba(79, 124, 168, 0.3);
+        }
+        .notif-item.unread {
+            border-left: 3px solid var(--accent-strong);
+            background: rgba(79, 124, 168, 0.12);
+        }
+        .notif-item-time {
+            margin-top: 4px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .notif-dropdown-empty {
+            padding: 20px 16px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 13px;
+        }
+        .notif-dropdown-footer {
+            padding: 10px 16px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .notif-dropdown-footer a {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .blacklist-banner {
+            background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+            color: #fff;
+            text-align: center;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            position: relative;
+            z-index: 90;
+        }
+        .blacklist-banner a {
+            color: #fff;
+            text-decoration: underline;
+            font-weight: 700;
+        }
+            .screen-box {
+            background: transparent;
+            padding: 28px;
+            box-sizing: border-box;
+            min-height: calc(100vh - 68px);
+        }
+        .screen-box.wide {
+            margin: 0;
+            border-radius: 0;
+            width: 100%;
+        }
+        .screen-box.centered {
+            margin: 34px auto;
+            border-radius: 28px;
+            width: min(92%, 520px);
+        }
+        .screen-title {
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 18px;
+            font-size: 28px;
+            letter-spacing: 0.02em;
+            color: #eff6ff;
+        }
+        input[type=text], input[type=email], input[type=password], input[type=number],
+        input[type=datetime-local], textarea, select {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            box-sizing: border-box;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.94);
+            color: var(--text);
+            outline: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+        .btn{
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            color: #fff;
+            border: none;
+            padding: 11px 22px;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            border-radius: 999px;
+            box-shadow: 0 12px 24px rgba(31, 57, 86, 0.25);
+        }
+        .dash-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text);
+            border: none;
+            padding: 11px 18px;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+        }
+        .row { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+        .panel,
+        .auth-card,
+        .glass-card,
+        .discussion-sidebar,
+        .discussion-conversation,
+        .topic-list,
+        .topic-summary-wrap,
+        .quiz-table-wrap,
+        .hero-card,
+        .welcome-card {
+            background: var(--glass);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(20px);
+        }
+        .welcome-card {
+            background:
+                radial-gradient(circle at 20% 20%, rgba(66, 134, 244, 0.34), transparent 28%),
+                radial-gradient(circle at 80% 30%, rgba(28, 177, 184, 0.26), transparent 24%),
+                radial-gradient(circle at 50% 82%, rgba(115, 86, 178, 0.18), transparent 25%),
+                rgba(15, 22, 39, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f8fbff;
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+        }
+        .welcome-card .screen-title {
+            color: #f8fbff;
+        }
+        .auth-card {
+            background: linear-gradient(180deg, rgba(245, 248, 252, 0.96), rgba(229, 236, 245, 0.9));
+            color: var(--text);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.58);
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+        }
+        .auth-card .screen-title,
+        .auth-card label {
+            color: var(--text);
+        }
+        .page-card {
+            background: rgba(245, 247, 250, 0.96);
+            color: var(--text);
+            border-radius: 30px;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+        }
+        .page-card .page-card,
+        .page-card .table-card,
+        .page-card .part-metric,
+        .page-card .part-row {
+            box-shadow: none;
+        }
+        .panel {
+            padding: 18px;
+            border-radius: 22px;
+            margin-bottom: 12px;
+        }
+        .table-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 24px;
+            padding: 18px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
+            overflow-x: auto;
+        }
+        table {
+            width:100%;
+            min-width: 480px;
+            border-collapse: separate;
+        }
+        table th, table td {
+            padding: 14px 12px;
+            text-align:left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        }
+        table th {
+            color: #1f2937;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        table td {
+            color: var(--text);
+            font-size: 14px;
+        }
+        .error { color:#b42318; font-size:13px; margin-bottom:8px; }
+        .success { color:#067647; font-size:13px; margin-bottom:8px; }
+        label { font-size: 13px; color: var(--muted); font-weight: 600; }
+        .discussion-shell {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            min-height: calc(100vh - 130px);
+        }
+        .discussion-sidebar,
+        .discussion-conversation {
+            border-radius: 28px;
+            padding: 20px;
+        }
+        .discussion-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .discussion-sidebar-header,
+        .conversation-header,
+        .reply-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .sidebar-copy,
+        .conversation-subtitle,
+        .topic-card-meta,
+        .chat-meta {
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .topic-list,
+        .chat-thread {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .topic-list {
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+        .topic-card {
+            display: block;
+            padding: 14px 16px;
+            border-radius: 18px;
+            text-decoration: none;
+            color: inherit;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+        }
+        .topic-card.active {
+            background: linear-gradient(135deg, #1f2a44, #324561);
+            color: #fff;
+        }
+        .topic-card.active .topic-card-meta {
+            color: rgba(255, 255, 255, 0.78);
+        }
+        .topic-card-title,
+        .conversation-title {
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .topic-dot {
+            margin: 0 6px;
+        }
+        .discussion-conversation {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 0;
+        }
+        .chat-thread {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 6px;
+            min-height: 300px;
+        }
+        .chat-row {
+            display: flex;
+        }
+        .chat-row.mine {
+            justify-content: flex-end;
+        }
+        .chat-bubble {
+            max-width: min(58%, 480px);
+            padding: 14px 16px;
+            border-radius: 18px 18px 18px 6px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
+        }
+        .chat-row.mine .chat-bubble {
+            background: linear-gradient(135deg, #edf4fb, #dbe7f3);
+            border-color: rgba(79, 124, 168, 0.22);
+            color: #172033;
+            border-radius: 18px 18px 6px 18px;
+        }
+        .chat-row.mine .chat-meta {
+            color: #516170;
+        }
+        .chat-text {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .chat-time {
+            margin-top: 8px;
+            font-size: 12px;
+            color: inherit;
+            opacity: 0.65;
+        }
+        .chat-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .reaction-btn {
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 999px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            color: inherit;
+        }
+        .reaction-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            border-color: transparent;
+            color: #fff;
+        }
+        .reply-form {
+            margin-top: auto;
+        }
+        .reply-form textarea {
+            min-height: 110px;
+            resize: vertical;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .chat-btn {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 999px;
+            margin: 0;
+        }
+        .empty-panel,
+        .empty-conversation {
+            padding: 18px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--muted);
+        }
+        .empty-conversation {
+            margin: auto;
+            max-width: 520px;
+            text-align: center;
+        }
+        .reply-actions {
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+        .status-pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(79, 124, 168, 0.14);
+            font-size: 12px;
+            color: #20324a;
+        }
+        .quiz-actions {
+            white-space: nowrap;
+        }
+        @media (max-width: 960px) {
+            .discussion-shell {
+                grid-template-columns: 1fr;
+            }
+            .chat-bubble {
+                max-width: 100%;
+            }
+        }
+        .nav-hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        @media (max-width: 720px) {
+            .screen-box {
+                padding: 18px;
+            }
+            .navbar {
+                padding: 12px 16px;
+                gap: 12px;
+            }
+            .navbar .nav-hamburger-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .navbar .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(10, 15, 28, 0.97);
+                flex-direction: column;
+                gap: 0;
+                padding: 6px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32);
+                max-width: none;
+            }
+            .navbar .nav-links.mobile-open {
+                display: flex;
+            }
+            .navbar .nav-links a {
+                padding: 14px 22px;
+            }
+            .notif-bell-btn,
+            .user-profile-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 15px;
+            }
+            .notif-badge {
+                width: 15px;
+                height: 15px;
+                font-size: 9px;
+                top: -2px;
+                right: -2px;
+            }
+            .notif-dropdown {
+                right: 16px;
+                width: min(88vw, 320px);
+            }
+            .screen-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="navbar">
+        <?php if(auth()->guard()->check()): ?>
+            <button class="nav-hamburger-btn" id="navHamburgerBtn" aria-label="Toggle menu">&#9776;</button>
+            <div class="nav-links" id="navLinks">
+               <a href="/dashboard">Dashboard</a>
+               <a href="<?php echo e(route('groups.index')); ?>">Groups</a>
+                <a href="/quizzes">Quiz</a>
+                <a href="<?php echo e(route('recommendations.index')); ?>">Recommended</a>
+                <?php if(auth()->user()->role === \App\Enums\RoleEnum::Admin): ?>
+                    <a href="<?php echo e(route('admin.users.index')); ?>">Manage Users</a>
+                    <a href="<?php echo e(route('admin.statistics.index')); ?>">Statistics</a>
+                <?php elseif(auth()->user()->role === \App\Enums\RoleEnum::Lecturer): ?>
+                    <a href="<?php echo e(route('groups.statistics', auth()->user()->createdGroups()->first()?->id ?? auth()->user()->groups()->first()?->id ?? 1)); ?>">Participation</a>
+                <?php endif; ?>
+            </div>
+            <div class="nav-right-cluster">
+                <div class="notif-bell-container">
+                    <button class="notif-bell-btn" id="notifBellBtn" title="Notifications">
+                        &#128276;
+                        <?php if(($navUnreadNotificationsCount ?? 0) > 0): ?>
+                            <span class="notif-badge" id="notifBadge"><?php echo e($navUnreadNotificationsCount > 9 ? '9+' : $navUnreadNotificationsCount); ?></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-dropdown-header">
+                            <span>Notifications</span>
+                            <button type="button" id="notifMarkAllRead">Mark all read</button>
+                        </div>
+                        <?php $__empty_1 = true; $__currentLoopData = ($navRecentNotifications ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $n): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                            <div class="notif-item <?php echo e($n->read_at ? '' : 'unread'); ?>" data-id="<?php echo e($n->id); ?>">
+                                <div><?php echo e($n->data['message'] ?? 'New notification'); ?></div>
+                                <div class="notif-item-time"><?php echo e($n->created_at->diffForHumans()); ?></div>
+                            </div>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <div class="notif-dropdown-empty">You don't have any notifications yet.</div>
+                        <?php endif; ?>
+                        <div class="notif-dropdown-footer">
+                            <a href="<?php echo e(route('notifications.index')); ?>">View all notifications</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="user-menu-container">
+                    <?php
+                        $initials = collect(explode(' ', auth()->user()->name))
+                            ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                            ->take(2)
+                            ->join('');
+                    ?>
+                    <button class="user-profile-btn" id="userMenuBtn" title="<?php echo e(auth()->user()->name); ?>"><?php echo e($initials); ?></button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-info"><?php echo e(auth()->user()->name); ?><br><?php echo e(ucfirst(auth()->user()->role->value)); ?></div>
+                        <a href="/profile">View Profile</a>
+                        <form method="POST" action="/logout" style="margin:0;">
+                            <?php echo csrf_field(); ?>
+                            <button type="submit" style="margin:0;">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <?php else: ?>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+        </div>
+    <?php endif; ?>
+</div>
+<?php if(auth()->guard()->check()): ?>
+    <div id="blacklistBannerContainer">
+        <?php if(!empty($activeBlacklistEntry)): ?>
+            <div class="blacklist-banner">
+                Your account is blacklisted: <?php echo e($activeBlacklistEntry->Reason); ?>.
+                <a href="<?php echo e(route('blacklist.status')); ?>">View details</a>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+<script>
+    document.getElementById('navHamburgerBtn')?.addEventListener('click', function(event) {
+        event.stopPropagation();
+        document.getElementById('navLinks')?.classList.toggle('mobile-open');
+        document.getElementById('userDropdown')?.classList.remove('active');
+        document.getElementById('notifDropdown')?.classList.remove('active');
+    });
+
+    document.querySelectorAll('#navLinks a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            document.getElementById('navLinks')?.classList.remove('mobile-open');
+        });
+    });
+
+    document.getElementById('userMenuBtn')?.addEventListener('click', function(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('userDropdown');
+        dropdown.classList.toggle('active');
+        document.getElementById('notifDropdown')?.classList.remove('active');
+        document.getElementById('navLinks')?.classList.remove('mobile-open');
+    });
+
+    document.getElementById('notifBellBtn')?.addEventListener('click', function(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('notifDropdown');
+        dropdown.classList.toggle('active');
+        document.getElementById('userDropdown')?.classList.remove('active');
+        document.getElementById('navLinks')?.classList.remove('mobile-open');
+    });
+
+    document.addEventListener('click', function(event) {
+        const userContainer = document.querySelector('.user-menu-container');
+        if (userContainer && !userContainer.contains(event.target)) {
+            document.getElementById('userDropdown')?.classList.remove('active');
+        }
+        const notifContainer = document.querySelector('.notif-bell-container');
+        if (notifContainer && !notifContainer.contains(event.target)) {
+            document.getElementById('notifDropdown')?.classList.remove('active');
+        }
+        const navContainer = document.querySelector('.navbar');
+        if (navContainer && !navContainer.contains(event.target)) {
+            document.getElementById('navLinks')?.classList.remove('mobile-open');
+        }
+    });
+
+    (function() {
+        const navNotifToken = <?php echo json_encode(session('api_token'), 15, 512) ?>;
+        const notifListEl = document.getElementById('notifDropdown');
+        const pollIntervalMs = 15000;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str ?? '';
+            return div.innerHTML;
+        }
+
+        function timeAgo(dateStr) {
+            const then = new Date(dateStr);
+            if (isNaN(then.getTime())) return '';
+            const seconds = Math.max(0, Math.floor((Date.now() - then.getTime()) / 1000));
+            const units = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60]];
+            for (const [name, secs] of units) {
+                const value = Math.floor(seconds / secs);
+                if (value >= 1) return value + ' ' + name + (value > 1 ? 's' : '') + ' ago';
+            }
+            return 'just now';
+        }
+
+        function updateBadge(count) {
+            let badge = document.getElementById('notifBadge');
+            if (count <= 0) {
+                badge?.remove();
+                return;
+            }
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.id = 'notifBadge';
+                badge.className = 'notif-badge';
+                document.getElementById('notifBellBtn')?.appendChild(badge);
+            }
+            badge.textContent = count > 9 ? '9+' : count;
+        }
+
+        function bindItemHandlers() {
+            notifListEl.querySelectorAll('.notif-item.unread').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    fetch('/api/notifications/' + item.dataset.id + '/read', {
+                        method: 'POST',
+                        headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
+                    }).then(() => {
+                        item.classList.remove('unread');
+                        updateBadge(notifListEl.querySelectorAll('.notif-item.unread').length);
+                    });
+                });
+            });
+        }
+
+        function renderNotifications(items) {
+            const header = notifListEl.querySelector('.notif-dropdown-header');
+            const footer = notifListEl.querySelector('.notif-dropdown-footer');
+            notifListEl.querySelectorAll('.notif-item, .notif-dropdown-empty').forEach(el => el.remove());
+
+            const top = items.slice(0, 6);
+            if (top.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'notif-dropdown-empty';
+                empty.textContent = "You don't have any notifications yet.";
+                notifListEl.insertBefore(empty, footer);
+            } else {
+                top.forEach(function(n) {
+                    const el = document.createElement('div');
+                    el.className = 'notif-item' + (n.read_at ? '' : ' unread');
+                    el.dataset.id = n.id;
+                    el.innerHTML = '<div>' + escapeHtml((n.data && n.data.message) || 'New notification') + '</div>' +
+                        '<div class="notif-item-time">' + timeAgo(n.created_at) + '</div>';
+                    notifListEl.insertBefore(el, footer);
+                });
+            }
+            bindItemHandlers();
+            updateBadge(items.filter(n => !n.read_at).length);
+        }
+
+        function pollNotifications() {
+            fetch('/api/notifications', {
+                headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
+            })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(json => {
+                    const list = Array.isArray(json) ? json : (json.data || json.notifications || []);
+                    renderNotifications(list);
+                })
+                .catch(() => {});
+        }
+
+        bindItemHandlers();
+
+        document.getElementById('notifMarkAllRead')?.addEventListener('click', function(event) {
+            event.stopPropagation();
+            fetch('/api/notifications/read-all', {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
+            }).then(() => {
+                notifListEl.querySelectorAll('.notif-item.unread').forEach(function(item) {
+                    item.classList.remove('unread');
+                });
+                updateBadge(0);
+            });
+        });
+
+        setInterval(pollNotifications, pollIntervalMs);
+    })();
+
+    (function() {
+        const bannerContainer = document.getElementById('blacklistBannerContainer');
+        if (!bannerContainer) return;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str ?? '';
+            return div.innerHTML;
+        }
+
+        function renderBanner(data) {
+            if (data.blacklisted) {
+                bannerContainer.innerHTML = '<div class="blacklist-banner">Your account is blacklisted: ' +
+                    escapeHtml(data.reason || 'Blacklisted by Admin.') + '. <a href="/blacklist-status">View details</a></div>';
+            } else {
+                bannerContainer.innerHTML = '';
+            }
+        }
+
+        function pollBlacklistStatus() {
+            fetch('/api/blacklist-status', { headers: { Accept: 'application/json' } })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(renderBanner)
+                .catch(() => {});
+        }
+
+        setInterval(pollBlacklistStatus, 8000);
+    })();
+</script>
+<div class="screen-box <?php echo $__env->yieldContent('box-style', 'wide'); ?>">
+    <?php if(session('success')): ?>
+        <div class="success"><?php echo e(session('success')); ?></div>
+    <?php endif; ?>
+    <?php if(session('error')): ?>
+        <div class="error"><?php echo e(session('error')); ?></div>
+    <?php endif; ?>
+    <?php if (! empty(trim($__env->yieldContent('header')))): ?>
+        <div style="max-width:1100px; margin:0 auto 12px; padding:0 8px;">
+            <?php echo $__env->yieldContent('header'); ?>
+        </div>
+    <?php endif; ?>
+    <?php echo $__env->yieldContent('content'); ?>
+</div>
+    <?php if(auth()->guard()->check()): ?>
+<?php
+    $requestPath = request()->path();
+    $skipQuizPoll = str_contains($requestPath, 'chat')
+        || str_contains($requestPath, 'topics/')
+        || str_contains($requestPath, 'discussions');
+?>
+<?php if(auth()->user()->role->value === 'student' && ! $skipQuizPoll): ?>
+<div id="quizCountdownBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#4f7ca8,#2f5f84); color:#fff; text-align:center; padding:12px; font-weight:700;">
+    <span id="quizCountdownText"></span>
+</div>
+<script>
+    let quizRedirectTimer = null;
+    let quizPollTimer = null;
+    // Only show the countdown banner within this many seconds before start (30s)
+    const countdownWindowSeconds = 30;
+
+    function formatCountdown(totalSeconds) {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function redirectToQuiz(quizId) {
+        const targetPath = '/quizzes/' + quizId;
+        if (!window.location.pathname.startsWith(targetPath)) {
+            window.location.href = targetPath;
+        }
+    }
+
+    function checkUpcomingQuiz() {
+        fetch('/quizzes/upcoming-check')
+            .then(res => res.json())
+            .then(data => {
+                const banner = document.getElementById('quizCountdownBanner');
+                const text = document.getElementById('quizCountdownText');
+
+                if (!data.upcoming) {
+                    banner.style.display = 'none';
+                    if (quizRedirectTimer) {
+                        clearInterval(quizRedirectTimer);
+                        quizRedirectTimer = null;
+                    }
+                    return;
+                }
+
+                if (data.upcoming.phase === 'active') {
+                    const targetPath = '/quizzes/' + data.upcoming.id;
+                    // If already viewing the quiz page, don't show the banner
+                    if (window.location.pathname.startsWith(targetPath)) {
+                        banner.style.display = 'none';
+                        return;
+                    }
+
+                    banner.style.display = 'block';
+                    text.textContent = `"${data.upcoming.title}" is live now.`;
+                    redirectToQuiz(data.upcoming.id);
+                    return;
+                }
+
+                const seconds = data.upcoming.seconds_until_start;
+
+                if (seconds <= countdownWindowSeconds) {
+                    banner.style.display = 'block';
+                    let remaining = seconds;
+
+                    if (quizRedirectTimer) clearInterval(quizRedirectTimer);
+
+                    quizRedirectTimer = setInterval(() => {
+                        remaining--;
+                        text.textContent = `"${data.upcoming.title}" starts in ${formatCountdown(Math.max(0, remaining))}`;
+
+                        if (remaining <= 0) {
+                            clearInterval(quizRedirectTimer);
+                            quizRedirectTimer = null;
+                            redirectToQuiz(data.upcoming.id);
+                        }
+                    }, 1000);
+
+                    text.textContent = `"${data.upcoming.title}" starts in ${formatCountdown(remaining)}`;
+                } else {
+                    banner.style.display = 'none';
+                }
+            })
+            .catch(() => {});
+    }
+
+    checkUpcomingQuiz();
+    quizPollTimer = setInterval(checkUpcomingQuiz, 5000);
+</script>
+<?php endif; ?>
+<?php endif; ?>
+    
+    <?php echo $__env->yieldPushContent('scripts'); ?>
+</body>
+</html><?php /**PATH C:\Users\PILOT\Desktop\forum-backend\resources\views/layouts/app.blade.php ENDPATH**/ ?>
