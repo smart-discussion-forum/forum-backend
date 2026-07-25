@@ -19,6 +19,7 @@
         <a href="/quizzes/{{ $quiz->quiz_id }}/edit" class="btn">Edit Quiz</a>
     @endif
     <a href="/quizzes/{{ $quiz->quiz_id }}/submissions" class="dash-btn">View Submissions</a>
+    <a href="/quizzes/{{ $quiz->quiz_id }}/answers" class="dash-btn">View Answer Key</a>
 </div>
     </div>
 @endsection

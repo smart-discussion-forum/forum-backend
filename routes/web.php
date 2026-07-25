@@ -64,6 +64,7 @@ Route::get('/quizzes/list-check', [QuizController::class, 'listCheck']);
 Route::get('/quizzes/results/{submissionId}', [QuizController::class, 'results']);
 Route::post('/quizzes', [QuizController::class, 'store']);
 Route::get('/quizzes/{id}', [QuizController::class, 'show']);
+Route::get('/quizzes/{id}/answers', [QuizController::class, 'answerKey'])->name('quizzes.answers');
 Route::get('/quizzes/{id}/edit', [QuizController::class, 'edit']);
 Route::put('/quizzes/{id}', [QuizController::class, 'update']);
 Route::get('/quizzes/{id}/submissions', [QuizController::class, 'submissions']);
