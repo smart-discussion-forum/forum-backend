@@ -9,8 +9,10 @@ use App\Models\Post;
 use App\Models\Group;
 use App\Models\ParticipationMark;
 use App\Notifications\NewTopicPosted;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class TopicController extends Controller
 {
@@ -177,5 +179,30 @@ class TopicController extends Controller
         }
 
         return redirect('/groups/' . $groupId . '/topics/' . $topicId);
+    }
+    public function exportPdf($groupId, $id)
+    {
+        $this->assertMember($groupId);
+
+        $group = Group::findOrFail($groupId);
+        $topic = Topic::with(['creator', 'group'])
+            ->where('group_id', $groupId)
+            ->findOrFail($id);
+
+        $posts = $topic->posts()
+            ->with('user')
+            ->orderBy('created_at')
+            ->get();
+
+        $pdf = Pdf::loadView('topics.export-pdf', [
+            'topic' => $topic,
+            'posts' => $posts,
+            'group' => $group,
+        ])->setPaper('a4');
+
+        $slug = Str::slug($topic->title);
+        $filename = 'topic-' . $topic->id . ($slug ? '-' . $slug : '') . '-' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
     }
 }
