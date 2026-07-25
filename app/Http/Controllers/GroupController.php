@@ -56,12 +56,29 @@ public function create()
         return response()->json($group);
     }
 
+    public function browse(Request $request)
+{
+    $user = Auth::user();
+
+    $myGroups = $user->groups()->get();
+    $myGroupIds = $myGroups->pluck('id');
+
+    $joinableGroups = Group::whereNotIn('id', $myGroupIds)
+        ->withCount('members')
+        ->get();
+
+    return response()->json([
+        'myGroups' => $myGroups,
+        'joinableGroups' => $joinableGroups,
+    ]);
+}
+
 public function join(Request $request, $id)
 {
     $group = Group::findOrFail($id);
     $user = Auth::user();
     if ($group->members()->where('user_id', $user->id)->exists()) {
-        if ($request->ajax() && $request->wantsJson()) {
+        if ($request->wantsJson()) {
             return response()->json(['message' => 'You already belong to this group.'], 409);
         }
 
@@ -72,6 +89,10 @@ public function join(Request $request, $id)
         'joined_at' => now(),
     ]);
 
+    if ($request->wantsJson()) {
+        return response()->json(['message' => 'Joined group successfully.'], 200);
+    }
+
     return redirect()->route('groups.index')->with('success', 'Joined group successfully.');
 }
 
@@ -79,14 +100,20 @@ public function leave(Request $request, $id)
 {
     $group = Group::findOrFail($id);
     $user = Auth::user();
+
     if (! $group->members()->where('user_id', $user->id)->exists()) {
-        if ($request->ajax() && $request->wantsJson()) {
+        if ($request->wantsJson()) {
             return response()->json(['message' => 'You are not a member of this group.'], 409);
         }
 
         return redirect()->route('groups.index')->with('error', 'You are not a member of this group.');
     }
     $group->members()->detach($user->id);
+
+        if ($request->wantsJson()) {
+        return response()->json(['message' => 'Left group successfully.'], 200);
+    }
+
 
     return redirect()->route('groups.index')->with('success', 'Left group successfully.');
 }
