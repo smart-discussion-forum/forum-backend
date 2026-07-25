@@ -7,6 +7,7 @@ use App\Enums\RoleEnum;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -34,22 +35,31 @@ class AuthController extends Controller
         return back()->with('success', 'Profile updated.');
     }
 
-    public function updatePassword(Request $request)
+    public function showForgotPassword()
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function resetPassword(Request $request)
     {
         $data = $request->validate([
-            'current_password' => ['required'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
-        if (! Hash::check($data['current_password'], auth()->user()->password)) {
-            return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+        $user = User::where('email', $data['email'])->first();
+
+        if (! $user) {
+            return back()->withInput()->withErrors(['email' => 'No account was found with that email address.']);
         }
 
-        auth()->user()->update([
+        $user->forceFill([
             'password' => Hash::make($data['password']),
-        ]);
+        ])->setRememberToken(Str::random(60));
 
-        return back()->with('success', 'Password updated.');
+        $user->save();
+
+        return redirect()->route('login')->with('status', 'Password updated. You can now log in with your new password.');
     }
 
         public function register(Request $request)
@@ -74,7 +84,7 @@ class AuthController extends Controller
         auth()->login($user);
         session(['api_token' => $user->createToken('web_token')->plainTextToken]);
 
-        return redirect('/dashboard');
+        return redirect()->route('groups.index');
     }
 
     public function login(Request $request)

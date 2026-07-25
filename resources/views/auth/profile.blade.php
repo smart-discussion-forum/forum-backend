@@ -4,7 +4,9 @@
         <div class="screen-title" style="color:var(--text); margin-bottom:8px;">Profile</div>
         <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
             <a href="/dashboard" class="dash-btn">Dashboard</a>
-            <a href="/chat" class="dash-btn">Group Chat</a>
+            @if($user->role !== \App\Enums\RoleEnum::Admin)
+                <a href="/chat" class="dash-btn">Group Chat</a>
+            @endif
             <a href="/quizzes" class="dash-btn">Quizzes</a>
         </div>
 
@@ -27,27 +29,6 @@
 
                 <div style="text-align:right; margin-top:10px;">
                     <button type="submit" class="btn">Update Profile</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="panel" style="max-width:720px; margin:0 auto;">
-            <strong>Change Password</strong>
-            <form method="POST" action="/profile/password" style="margin-top:10px;">
-                @csrf
-                <label>Current Password:</label>
-                <input type="password" name="current_password">
-                @error('current_password') <div class="error">{{ $message }}</div> @enderror
-
-                <label>New Password:</label>
-                <input type="password" name="password">
-                @error('password') <div class="error">{{ $message }}</div> @enderror
-
-                <label>Confirm New Password:</label>
-                <input type="password" name="password_confirmation">
-
-                <div style="text-align:right; margin-top:10px;">
-                    <button type="submit" class="btn">Update Password</button>
                 </div>
             </form>
         </div>

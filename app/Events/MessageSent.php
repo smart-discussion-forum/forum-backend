@@ -36,12 +36,15 @@ class MessageSent implements ShouldBroadcastNow
     {
         $this->message->loadMissing('sender:id,name');
 
+        $excludedUserIds = $this->message->exclusions()->pluck('excluded_user_id')->map(fn ($id) => (int) $id)->all();
+
         return [
             'id' => $this->message->id,
             'group_id' => $this->message->group_id,
             'sender_id' => $this->message->sender_id,
             'content' => $this->message->content,
             'sent_at' => $this->message->sent_at?->toIso8601String(),
+            'excluded_user_ids' => $excludedUserIds,
             'sender' => [
                 'id' => $this->message->sender->id,
                 'name' => $this->message->sender->name,

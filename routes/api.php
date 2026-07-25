@@ -69,7 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Topics
     Route::get('/topics/search', [TopicController::class, 'search']);
     Route::get('/groups/{groupId}/topics', [TopicController::class, 'index']);
-    Route::post('/groups/{groupId}/topics', [TopicController::class, 'store'])->middleware('not_blacklisted');
+    Route::post('/groups/{groupId}/topics', [TopicController::class, 'store'])->middleware(['lecturer', 'not_blacklisted']);
     Route::get('/topics/{topicId}', [TopicController::class, 'show']);
 
     // Posts

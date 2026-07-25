@@ -8,6 +8,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
             <div class="screen-title" style="margin:0; text-align:left; color:var(--text);">{{ $group->name }}</div>
             <a href="/chat?group={{ $group->id }}" class="dash-btn">Back to Group Chat</a>
+            <a href="{{ route('topics.export-pdf', ['groupId' => $group->id, 'id' => $topic->id]) }}" class="dash-btn">Export as PDF</a>
         </div>
         <div class="discussion-shell">
             <aside class="discussion-sidebar">
@@ -16,7 +17,9 @@
                         <div class="screen-title" style="margin-bottom:6px; text-align:left; color:var(--text);">Topics</div>
                         <div class="sidebar-copy">Open a topic thread to see the conversation.</div>
                     </div>
-                    <a href="/groups/{{ $group->id }}/topics/create" class="chat-btn">New topic</a>
+                    @if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true))
+                        <a href="/groups/{{ $group->id }}/topics/create" class="chat-btn">New topic</a>
+                    @endif
                 </div>
 
                 <div class="topic-list">
@@ -74,12 +77,13 @@
             </section>
         </div>
     </div>
+@endsection
 
+@push('scripts')
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
 <script>
 (function () {
-    if (window.__topicThreadBound) return;
-    window.__topicThreadBound = true;
-
     const csrfToken = @json(csrf_token());
     const token = @json(session('api_token'));
     const authUserId = Number(@json(auth()->id()));
@@ -87,7 +91,6 @@
     const currentTopicId = Number(@json($topic->id));
     const postIds = new Set(@json($posts->pluck('id')->values()));
     const postsUrl = '/groups/' + currentGroupId + '/topics/' + currentTopicId + '/posts';
-    const apiPostsUrl = '/api/topics/' + currentTopicId + '/posts';
 
     const textarea = document.getElementById('reply-content');
     const button = document.getElementById('reply-send-btn');
@@ -101,7 +104,7 @@
     }
 
     function appendPost(post) {
-        if (!post || post.id == null || postIds.has(post.id)) return;
+        if (!post || post.id == null || postIds.has(Number(post.id)) || postIds.has(post.id)) return;
         if (post.topic_id != null && Number(post.topic_id) !== currentTopicId) return;
 
         postIds.add(post.id);
@@ -132,17 +135,11 @@
         thread.scrollTop = thread.scrollHeight;
     }
 
-    function loadPosts() {
-        const headers = { Accept: 'application/json' };
-        if (token) headers.Authorization = 'Bearer ' + token;
-
-        fetch(apiPostsUrl, { headers })
-            .then(res => res.json())
-            .then(posts => {
-                if (!Array.isArray(posts)) return;
-                posts.forEach(appendPost);
-            })
-            .catch(() => {});
+    function removePostById(id) {
+        postIds.delete(id);
+        postIds.delete(Number(id));
+        const el = document.querySelector(`[data-post-id="${CSS.escape(String(id))}"]`);
+        if (el) el.remove();
     }
 
     function sendReply() {
@@ -154,6 +151,16 @@
         sending = true;
         button.disabled = true;
         textarea.disabled = true;
+
+        const tempId = 'temp-' + Date.now();
+        appendPost({
+            id: tempId,
+            topic_id: currentTopicId,
+            content: content,
+            created_at: new Date().toISOString(),
+            user: { id: authUserId, name: 'You' },
+        });
+        textarea.value = '';
 
         fetch(postsUrl, {
             method: 'POST',
@@ -170,10 +177,12 @@
             if (!res.ok || !data.success || !data.post) {
                 throw new Error(typeof data.message === 'string' ? data.message : 'Failed to send reply.');
             }
+            removePostById(tempId);
             appendPost(data.post);
-            textarea.value = '';
         })
         .catch((err) => {
+            removePostById(tempId);
+            textarea.value = content;
             alert(err.message || 'Failed to send reply.');
         })
         .finally(() => {
@@ -184,6 +193,7 @@
         });
     }
 
+    // Wire sending first so Reverb/Echo failures cannot break replies.
     button.addEventListener('click', sendReply);
     textarea.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -192,47 +202,41 @@
         }
     });
 
-    setInterval(loadPosts, 3000);
     document.getElementById('chat-thread').scrollTop = document.getElementById('chat-thread').scrollHeight;
 
-    function initRealtime() {
-        if (typeof Pusher === 'undefined' || typeof Echo === 'undefined') return;
-
-        try {
-            window.Pusher = Pusher;
-            window.Echo = new Echo({
-                broadcaster: 'reverb',
-                key: @json(env('REVERB_APP_KEY')),
-                wsHost: @json(env('REVERB_HOST', 'localhost')),
-                wsPort: {{ env('REVERB_PORT', 8080) }},
-                wssPort: {{ env('REVERB_PORT', 8080) }},
-                forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
-                enabledTransports: ['ws', 'wss'],
-                authEndpoint: '/broadcasting/auth',
-                auth: {
-                    headers: {
-                        Authorization: token ? ('Bearer ' + token) : '',
-                        Accept: 'application/json',
-                    },
-                },
-            });
-
-            window.Echo.private('group.' + currentGroupId)
-                .listen('.post.created', (event) => appendPost(event));
-        } catch (err) {
-            console.warn('Topic realtime unavailable:', err);
+    try {
+        if (typeof Pusher === 'undefined' || typeof Echo === 'undefined' || !token) {
+            throw new Error('Realtime libraries unavailable');
         }
-    }
 
-    const pusherScript = document.createElement('script');
-    pusherScript.src = 'https://js.pusher.com/8.2.0/pusher.min.js';
-    pusherScript.onload = function () {
-        const echoScript = document.createElement('script');
-        echoScript.src = 'https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js';
-        echoScript.onload = initRealtime;
-        document.body.appendChild(echoScript);
-    };
-    document.body.appendChild(pusherScript);
+        window.Pusher = Pusher;
+        window.Echo = new Echo({
+            broadcaster: 'reverb',
+            key: @json(env('REVERB_APP_KEY')),
+            wsHost: @json(env('REVERB_HOST', 'localhost')),
+            wsPort: @json((int) (env('REVERB_PORT') ?: 8080)),
+            wssPort: @json((int) (env('REVERB_PORT') ?: 8080)),
+            forceTLS: @json(env('REVERB_SCHEME', 'http') === 'https'),
+            enabledTransports: ['ws', 'wss'],
+            disableStats: true,
+            authEndpoint: '/broadcasting/auth',
+            auth: {
+                headers: {
+                    Authorization: 'Bearer ' + token,
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+            },
+        });
+
+        window.Echo.private('group.' + currentGroupId)
+            .listen('.post.created', (e) => {
+                const post = e?.post ? e.post : e;
+                appendPost(post);
+            });
+    } catch (err) {
+        console.warn('Topic realtime unavailable:', err);
+    }
 })();
 </script>
-@endsection
+@endpush

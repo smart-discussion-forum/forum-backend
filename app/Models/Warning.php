@@ -49,4 +49,3 @@ class Warning extends Model
         return $query->where('Source', self::SOURCE_AUTO_INACTIVITY);
     }
 }
-

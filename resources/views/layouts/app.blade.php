@@ -364,7 +364,6 @@
         .topic-summary-wrap,
         .quiz-table-wrap,
         .hero-card,
-        .page-card,
         .welcome-card {
             background: var(--glass);
             border: 1px solid var(--line);
@@ -396,9 +395,17 @@
             color: var(--text);
         }
         .page-card {
-            background: rgba(245, 247, 250, 0.92);
+            background: rgba(245, 247, 250, 0.96);
             color: var(--text);
             border-radius: 30px;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+        }
+        .page-card .page-card,
+        .page-card .table-card,
+        .page-card .part-metric,
+        .page-card .part-row {
+            box-shadow: none;
         }
         .panel {
             padding: 18px;
@@ -697,7 +704,12 @@
                <a href="{{ route('groups.index') }}">Groups</a>
                 <a href="/quizzes">Quiz</a>
                 <a href="{{ route('recommendations.index') }}">Recommended</a>
-                <a href="{{ route('groups.statistics', auth()->user()->groups()->first()?->id ?? 1) }}">Stats</a>
+                @if(auth()->user()->role === \App\Enums\RoleEnum::Admin)
+                    <a href="{{ route('admin.users.index') }}">Manage Users</a>
+                    <a href="{{ route('admin.statistics.index') }}">Statistics</a>
+                @elseif(auth()->user()->role === \App\Enums\RoleEnum::Lecturer)
+                    <a href="{{ route('groups.statistics', auth()->user()->createdGroups()->first()?->id ?? auth()->user()->groups()->first()?->id ?? 1) }}">Participation</a>
+                @endif
             </div>
             <div class="nav-right-cluster">
                 <div class="notif-bell-container">
@@ -949,10 +961,21 @@
     @if(session('error'))
         <div class="error">{{ session('error') }}</div>
     @endif
+    @hasSection('header')
+        <div style="max-width:1100px; margin:0 auto 12px; padding:0 8px;">
+            @yield('header')
+        </div>
+    @endif
     @yield('content')
-    </div>
+</div>
     @auth
-@if(auth()->user()->role->value === 'student')
+@php
+    $requestPath = request()->path();
+    $skipQuizPoll = str_contains($requestPath, 'chat')
+        || str_contains($requestPath, 'topics/')
+        || str_contains($requestPath, 'discussions');
+@endphp
+@if(auth()->user()->role->value === 'student' && ! $skipQuizPoll)
 <div id="quizCountdownBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#4f7ca8,#2f5f84); color:#fff; text-align:center; padding:12px; font-weight:700;">
     <span id="quizCountdownText"></span>
 </div>
