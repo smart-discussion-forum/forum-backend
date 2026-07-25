@@ -140,6 +140,25 @@ class GroupControllerTest extends TestCase
         $response->assertStatus(404);
     }
 
+    public function test_group_member_can_open_the_group_topics_page(): void
+    {
+        $student = $this->makeUser(RoleEnum::Student);
+        $group = Group::create(['name' => 'Physics Group', 'created_by' => $student->id]);
+        $group->members()->attach($student->id, ['role' => 'Member', 'joined_at' => now()]);
+        $topic = Topic::create([
+            'group_id' => $group->id,
+            'created_by' => $student->id,
+            'title' => 'Kinematics',
+        ]);
+
+        $response = $this->actingAs($student)->get("/groups/{$group->id}/topics");
+
+        $response->assertOk();
+        $response->assertSee('Physics Group Topics');
+        $response->assertSee('Kinematics');
+        $response->assertSee("/groups/{$group->id}/topics/{$topic->id}", false);
+    }
+
     // --- JOIN (Student only) ---
 
     public function test_student_can_join_group(): void

@@ -7,7 +7,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;">
             <div class="screen-title" style="margin:0; text-align:left; color:var(--text);"><?php echo e($group->name); ?></div>
             <a href="/chat?group=<?php echo e($group->id); ?>" class="dash-btn">Back to Group Chat</a>
-            <a href="<?php echo e(url('/topics/' . $topic->id . '/export-pdf')); ?>" class="dash-btn">Export as PDF</a>
+            <a href="<?php echo e(route('topics.export-pdf', ['groupId' => $group->id, 'id' => $topic->id])); ?>" class="dash-btn">Export as PDF</a>
         </div>
         <div class="discussion-shell">
             <aside class="discussion-sidebar">

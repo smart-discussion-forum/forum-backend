@@ -22,6 +22,9 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/login', fn() => view('auth.login'))->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'resetPassword'])->name('password.update');
+
 // Protected
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -29,7 +32,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/recommendations', [RecommendationController::class, 'index'])->name('recommendations.index');
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile', [AuthController::class, 'updateProfile']);
-    Route::post('/profile/password', [AuthController::class, 'updatePassword']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
     Route::get('/notifications', [NotificationController::class, 'page'])->name('notifications.index');
     Route::get('/blacklist-status', [BlacklistController::class, 'status'])->name('blacklist.status');

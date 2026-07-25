@@ -6,6 +6,13 @@
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <title><?php echo $__env->yieldContent('title', 'Mindshare Discussion Forum'); ?></title>
     <style>
+        *, *::before, *::after {
+                box-sizing: border-box;
+            }
+            html, body {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
         :root {
             --bg-0: #0b1020;
             --bg-1: #11192d;
@@ -39,6 +46,8 @@
         justify-content: space-between;
         align-items: center;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        position: relative;
+        z-index: 100;
     }
     .navbar .nav-links {
         display: flex;
@@ -68,6 +77,222 @@
         }
         .nac-logout:hover {
             opacity: 0.95;
+        }
+        .user-menu-container {
+            position: relative;
+        }
+        .user-profile-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f7ca8, #2f5f84);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+        }
+        .user-profile-btn:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+        .user-dropdown {
+            position: fixed;
+            top: 54px;
+            right: 28px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(18px);
+            min-width: 180px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            display: none;
+            flex-direction: column;
+            z-index: 10000;
+        }
+        .user-dropdown.active {
+            display: flex;
+        }
+        .user-dropdown a,
+        .user-dropdown form {
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.15s ease;
+            display: block;
+        }
+        .user-dropdown a:last-child,
+        .user-dropdown form:last-child {
+            border-bottom: none;
+        }
+        .user-dropdown a:hover,
+        .user-dropdown form:hover {
+            background: rgba(79, 124, 168, 0.3);
+        }
+        .user-dropdown button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.15s ease;
+        }
+        .user-dropdown form button:hover {
+            background: rgba(79, 124, 168, 0.3);
+        }
+        .user-dropdown .user-info {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .nav-right-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .notif-bell-container {
+            position: relative;
+        }
+        .notif-bell-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.92);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+        }
+        .notif-bell-btn:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+        .notif-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 2px solid rgba(10, 15, 28, 0.9);
+        }
+        .notif-dropdown {
+            position: fixed;
+            top: 54px;
+            right: 84px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(18px);
+            width: 320px;
+            max-height: 420px;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+            display: none;
+            flex-direction: column;
+            z-index: 10000;
+        }
+        .notif-dropdown.active {
+            display: flex;
+        }
+        .notif-dropdown-header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 700;
+        }
+        .notif-dropdown-header button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .notif-dropdown-header button:hover {
+            color: rgba(255, 255, 255, 0.95);
+        }
+        .notif-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .notif-item:last-child {
+            border-bottom: none;
+        }
+        .notif-item:hover {
+            background: rgba(79, 124, 168, 0.3);
+        }
+        .notif-item.unread {
+            border-left: 3px solid var(--accent-strong);
+            background: rgba(79, 124, 168, 0.12);
+        }
+        .notif-item-time {
+            margin-top: 4px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .notif-dropdown-empty {
+            padding: 20px 16px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 13px;
+        }
+        .notif-dropdown-footer {
+            padding: 10px 16px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .notif-dropdown-footer a {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .blacklist-banner {
+            background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+            color: #fff;
+            text-align: center;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            position: relative;
+            z-index: 90;
+        }
+        .blacklist-banner a {
+            color: #fff;
+            text-decoration: underline;
+            font-weight: 700;
         }
             .screen-box {
             background: transparent;
@@ -129,7 +354,7 @@
             border: 1px solid rgba(148, 163, 184, 0.24);
             box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
         }
-        .row { display:flex; justify-content:space-between; gap:10px; }
+        .row { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
         .panel,
         .auth-card,
         .glass-card,
@@ -186,14 +411,12 @@
             padding: 18px;
             box-shadow: var(--shadow);
             border: 1px solid var(--line);
+            overflow-x: auto;
         }
         table {
             width:100%;
+            min-width: 480px;
             border-collapse: separate;
-            border-spacing: 0;
-            background: transparent;
-            margin-bottom: 0;
-            overflow: hidden;
         }
         table th, table td {
             padding: 14px 12px;
@@ -399,6 +622,16 @@
                 max-width: 100%;
             }
         }
+        .nav-hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
         @media (max-width: 720px) {
             .screen-box {
                 padding: 18px;
@@ -406,11 +639,48 @@
             .navbar {
                 padding: 12px 16px;
                 gap: 12px;
-                flex-direction: column;
-                align-items: flex-start;
+            }
+            .navbar .nav-hamburger-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .navbar .nav-links {
-                gap: 14px;
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(10, 15, 28, 0.97);
+                flex-direction: column;
+                gap: 0;
+                padding: 6px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32);
+                max-width: none;
+            }
+            .navbar .nav-links.mobile-open {
+                display: flex;
+            }
+            .navbar .nav-links a {
+                padding: 14px 22px;
+            }
+            .notif-bell-btn,
+            .user-profile-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 15px;
+            }
+            .notif-badge {
+                width: 15px;
+                height: 15px;
+                font-size: 9px;
+                top: -2px;
+                right: -2px;
+            }
+            .notif-dropdown {
+                right: 16px;
+                width: min(88vw, 320px);
             }
             .screen-title {
                 font-size: 22px;
@@ -421,17 +691,57 @@
 <body>
 <div class="navbar">
         <?php if(auth()->guard()->check()): ?>
-            <div class="nav-links">
+            <button class="nav-hamburger-btn" id="navHamburgerBtn" aria-label="Toggle menu">&#9776;</button>
+            <div class="nav-links" id="navLinks">
                <a href="/dashboard">Dashboard</a>
+               <a href="<?php echo e(route('groups.index')); ?>">Groups</a>
                 <a href="/quizzes">Quiz</a>
-                <a href="/profile">Profile</a>
+                <a href="<?php echo e(route('recommendations.index')); ?>">Recommended</a>
+                <a href="<?php echo e(route('groups.statistics', auth()->user()->groups()->first()?->id ?? 1)); ?>">Stats</a>
             </div>
-            <div style="color:white; display:flex; align-items:center; gap:15px;">
-                <span><?php echo e(auth()->user()->name); ?> (<?php echo e(ucfirst(auth()->user()->role->value)); ?>)</span>
-                <form method="POST" action="/logout" style="display:inline;">
-                    <?php echo csrf_field(); ?>
-                    <button type="submit" class="nav-logout">Logout</button>
-                </form>
+            <div class="nav-right-cluster">
+                <div class="notif-bell-container">
+                    <button class="notif-bell-btn" id="notifBellBtn" title="Notifications">
+                        &#128276;
+                        <?php if(($navUnreadNotificationsCount ?? 0) > 0): ?>
+                            <span class="notif-badge" id="notifBadge"><?php echo e($navUnreadNotificationsCount > 9 ? '9+' : $navUnreadNotificationsCount); ?></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-dropdown-header">
+                            <span>Notifications</span>
+                            <button type="button" id="notifMarkAllRead">Mark all read</button>
+                        </div>
+                        <?php $__empty_1 = true; $__currentLoopData = ($navRecentNotifications ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $n): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                            <div class="notif-item <?php echo e($n->read_at ? '' : 'unread'); ?>" data-id="<?php echo e($n->id); ?>">
+                                <div><?php echo e($n->data['message'] ?? 'New notification'); ?></div>
+                                <div class="notif-item-time"><?php echo e($n->created_at->diffForHumans()); ?></div>
+                            </div>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <div class="notif-dropdown-empty">You don't have any notifications yet.</div>
+                        <?php endif; ?>
+                        <div class="notif-dropdown-footer">
+                            <a href="<?php echo e(route('notifications.index')); ?>">View all notifications</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="user-menu-container">
+                    <?php
+                        $initials = collect(explode(' ', auth()->user()->name))
+                            ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                            ->take(2)
+                            ->join('');
+                    ?>
+                    <button class="user-profile-btn" id="userMenuBtn" title="<?php echo e(auth()->user()->name); ?>"><?php echo e($initials); ?></button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-info"><?php echo e(auth()->user()->name); ?><br><?php echo e(ucfirst(auth()->user()->role->value)); ?></div>
+                        <a href="/profile">View Profile</a>
+                        <form method="POST" action="/logout" style="margin:0;">
+                            <?php echo csrf_field(); ?>
+                            <button type="submit" style="margin:0;">Logout</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         <?php else: ?>
         <div class="nav-links">
@@ -441,6 +751,166 @@
         </div>
     <?php endif; ?>
 </div>
+<?php if(auth()->guard()->check()): ?>
+    <?php if(!empty($activeBlacklistEntry)): ?>
+        <div class="blacklist-banner">
+            Your account is blacklisted: <?php echo e($activeBlacklistEntry->Reason); ?>.
+            <a href="<?php echo e(route('blacklist.status')); ?>">View details</a>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
+<script>
+    document.getElementById('navHamburgerBtn')?.addEventListener('click', function(event) {
+        event.stopPropagation();
+        document.getElementById('navLinks')?.classList.toggle('mobile-open');
+        document.getElementById('userDropdown')?.classList.remove('active');
+        document.getElementById('notifDropdown')?.classList.remove('active');
+    });
+
+    document.querySelectorAll('#navLinks a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            document.getElementById('navLinks')?.classList.remove('mobile-open');
+        });
+    });
+
+    document.getElementById('userMenuBtn')?.addEventListener('click', function(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('userDropdown');
+        dropdown.classList.toggle('active');
+        document.getElementById('notifDropdown')?.classList.remove('active');
+        document.getElementById('navLinks')?.classList.remove('mobile-open');
+    });
+
+    document.getElementById('notifBellBtn')?.addEventListener('click', function(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('notifDropdown');
+        dropdown.classList.toggle('active');
+        document.getElementById('userDropdown')?.classList.remove('active');
+        document.getElementById('navLinks')?.classList.remove('mobile-open');
+    });
+
+    document.addEventListener('click', function(event) {
+        const userContainer = document.querySelector('.user-menu-container');
+        if (userContainer && !userContainer.contains(event.target)) {
+            document.getElementById('userDropdown')?.classList.remove('active');
+        }
+        const notifContainer = document.querySelector('.notif-bell-container');
+        if (notifContainer && !notifContainer.contains(event.target)) {
+            document.getElementById('notifDropdown')?.classList.remove('active');
+        }
+        const navContainer = document.querySelector('.navbar');
+        if (navContainer && !navContainer.contains(event.target)) {
+            document.getElementById('navLinks')?.classList.remove('mobile-open');
+        }
+    });
+
+    (function() {
+        const navNotifToken = <?php echo json_encode(session('api_token'), 15, 512) ?>;
+        const notifListEl = document.getElementById('notifDropdown');
+        const pollIntervalMs = 15000;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str ?? '';
+            return div.innerHTML;
+        }
+
+        function timeAgo(dateStr) {
+            const then = new Date(dateStr);
+            if (isNaN(then.getTime())) return '';
+            const seconds = Math.max(0, Math.floor((Date.now() - then.getTime()) / 1000));
+            const units = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60]];
+            for (const [name, secs] of units) {
+                const value = Math.floor(seconds / secs);
+                if (value >= 1) return value + ' ' + name + (value > 1 ? 's' : '') + ' ago';
+            }
+            return 'just now';
+        }
+
+        function updateBadge(count) {
+            let badge = document.getElementById('notifBadge');
+            if (count <= 0) {
+                badge?.remove();
+                return;
+            }
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.id = 'notifBadge';
+                badge.className = 'notif-badge';
+                document.getElementById('notifBellBtn')?.appendChild(badge);
+            }
+            badge.textContent = count > 9 ? '9+' : count;
+        }
+
+        function bindItemHandlers() {
+            notifListEl.querySelectorAll('.notif-item.unread').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    fetch('/api/notifications/' + item.dataset.id + '/read', {
+                        method: 'POST',
+                        headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
+                    }).then(() => {
+                        item.classList.remove('unread');
+                        updateBadge(notifListEl.querySelectorAll('.notif-item.unread').length);
+                    });
+                });
+            });
+        }
+
+        function renderNotifications(items) {
+            const header = notifListEl.querySelector('.notif-dropdown-header');
+            const footer = notifListEl.querySelector('.notif-dropdown-footer');
+            notifListEl.querySelectorAll('.notif-item, .notif-dropdown-empty').forEach(el => el.remove());
+
+            const top = items.slice(0, 6);
+            if (top.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'notif-dropdown-empty';
+                empty.textContent = "You don't have any notifications yet.";
+                notifListEl.insertBefore(empty, footer);
+            } else {
+                top.forEach(function(n) {
+                    const el = document.createElement('div');
+                    el.className = 'notif-item' + (n.read_at ? '' : ' unread');
+                    el.dataset.id = n.id;
+                    el.innerHTML = '<div>' + escapeHtml((n.data && n.data.message) || 'New notification') + '</div>' +
+                        '<div class="notif-item-time">' + timeAgo(n.created_at) + '</div>';
+                    notifListEl.insertBefore(el, footer);
+                });
+            }
+            bindItemHandlers();
+            updateBadge(items.filter(n => !n.read_at).length);
+        }
+
+        function pollNotifications() {
+            fetch('/api/notifications', {
+                headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
+            })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(json => {
+                    const list = Array.isArray(json) ? json : (json.data || json.notifications || []);
+                    renderNotifications(list);
+                })
+                .catch(() => {});
+        }
+
+        bindItemHandlers();
+
+        document.getElementById('notifMarkAllRead')?.addEventListener('click', function(event) {
+            event.stopPropagation();
+            fetch('/api/notifications/read-all', {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
+            }).then(() => {
+                notifListEl.querySelectorAll('.notif-item.unread').forEach(function(item) {
+                    item.classList.remove('unread');
+                });
+                updateBadge(0);
+            });
+        });
+
+        setInterval(pollNotifications, pollIntervalMs);
+    })();
+</script>
 <div class="screen-box <?php echo $__env->yieldContent('box-style', 'wide'); ?>">
     <?php if(session('success')): ?>
         <div class="success"><?php echo e(session('success')); ?></div>
@@ -539,5 +1009,4 @@
     
     <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
-</html>
-<?php /**PATH C:\Users\PILOT\Desktop\forum-backend\resources\views/layouts/app.blade.php ENDPATH**/ ?>
+</html><?php /**PATH C:\Users\PILOT\Desktop\forum-backend\resources\views/layouts/app.blade.php ENDPATH**/ ?>

@@ -30,26 +30,5 @@
                 </div>
             </form>
         </div>
-
-        <div class="panel" style="max-width:720px; margin:0 auto;">
-            <strong>Change Password</strong>
-            <form method="POST" action="/profile/password" style="margin-top:10px;">
-                @csrf
-                <label>Current Password:</label>
-                <input type="password" name="current_password">
-                @error('current_password') <div class="error">{{ $message }}</div> @enderror
-
-                <label>New Password:</label>
-                <input type="password" name="password">
-                @error('password') <div class="error">{{ $message }}</div> @enderror
-
-                <label>Confirm New Password:</label>
-                <input type="password" name="password_confirmation">
-
-                <div style="text-align:right; margin-top:10px;">
-                    <button type="submit" class="btn">Update Password</button>
-                </div>
-            </form>
-        </div>
     </div>
 @endsection

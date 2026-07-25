@@ -3,18 +3,23 @@
     <div class="screen-title">Group Chat</div>
     <div style="display:flex; gap:20px;">
 
-        <div style="width:250px; border-right:1px solid var(--border);">
+        <div style="width:250px; border-right:1px solid var(--border); display:flex; flex-direction:column;">
             <h3 style="margin-bottom:15px;">Your Groups</h3>
-            <?php $__empty_1 = true; $__currentLoopData = $groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-            <div onclick='openGroup(<?php echo e($group->id); ?>, <?php echo json_encode($group->name, 15, 512) ?>)'
-                style="padding:10px; cursor:pointer; border-radius:8px;"
-                class="dash-btn group-item"
-                data-group-id="<?php echo e($group->id); ?>">
-                <?php echo e($group->name); ?>
+            <div style="flex:1;">
+                <?php $__empty_1 = true; $__currentLoopData = $groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <div onclick='openGroup(<?php echo e($group->id); ?>, <?php echo json_encode($group->name, 15, 512) ?>)'
+                    style="padding:10px; cursor:pointer; border-radius:8px;"
+                    class="dash-btn group-item"
+                    data-group-id="<?php echo e($group->id); ?>">
+                    <?php echo e($group->name); ?>
 
+                </div>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                <p style="color:var(--muted); font-size:14px;">You are not in any groups yet.</p>
+                <?php endif; ?>
             </div>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-            <p style="color:var(--muted); font-size:14px;">You are not in any groups yet.</p>
+            <?php if(auth()->user()->role !== \App\Enums\RoleEnum::Admin): ?>
+            <a href="<?php echo e(route('groups.index')); ?>" class="dash-btn" style="display:inline-block; margin-top:10px;">Browse Groups</a>
             <?php endif; ?>
         </div>
 
@@ -224,5 +229,4 @@ if (initialGroupId) {
 }
 </script>
 <?php $__env->stopPush(); ?>
-
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\PILOT\Desktop\forum-backend\resources\views/chat/index.blade.php ENDPATH**/ ?>
