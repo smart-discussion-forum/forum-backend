@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit99e86c04e8e93b38f1ba0319b18aaaf1
+class ComposerStaticInitb5e052931d8e569668e744be39d799f9
 {
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
@@ -722,6 +722,7 @@ class ComposerStaticInit99e86c04e8e93b38f1ba0319b18aaaf1
         'App\\Events\\NewPostCreated' => __DIR__ . '/../..' . '/app/Events/NewPostCreated.php',
         'App\\Events\\QuizAnnounced' => __DIR__ . '/../..' . '/app/Events/QuizAnnounced.php',
         'App\\Events\\QuizAttemptSubmitted' => __DIR__ . '/../..' . '/app/Events/QuizAttemptSubmitted.php',
+        'App\\Http\\Controllers\\AdminStatisticsController' => __DIR__ . '/../..' . '/app/Http/Controllers/AdminStatisticsController.php',
         'App\\Http\\Controllers\\AdminUserController' => __DIR__ . '/../..' . '/app/Http/Controllers/AdminUserController.php',
         'App\\Http\\Controllers\\Api\\PostController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/PostController.php',
         'App\\Http\\Controllers\\Api\\TopicController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/TopicController.php',
@@ -7316,76 +7317,6 @@ class ComposerStaticInit99e86c04e8e93b38f1ba0319b18aaaf1
         'Symfony\\Component\\Mailer\\Transport\\TransportFactoryInterface' => __DIR__ . '/..' . '/symfony/mailer/Transport/TransportFactoryInterface.php',
         'Symfony\\Component\\Mailer\\Transport\\TransportInterface' => __DIR__ . '/..' . '/symfony/mailer/Transport/TransportInterface.php',
         'Symfony\\Component\\Mailer\\Transport\\Transports' => __DIR__ . '/..' . '/symfony/mailer/Transport/Transports.php',
-        'Symfony\\Component\\Mime\\Address' => __DIR__ . '/..' . '/symfony/mime/Address.php',
-        'Symfony\\Component\\Mime\\BodyRendererInterface' => __DIR__ . '/..' . '/symfony/mime/BodyRendererInterface.php',
-        'Symfony\\Component\\Mime\\CharacterStream' => __DIR__ . '/..' . '/symfony/mime/CharacterStream.php',
-        'Symfony\\Component\\Mime\\Crypto\\DkimOptions' => __DIR__ . '/..' . '/symfony/mime/Crypto/DkimOptions.php',
-        'Symfony\\Component\\Mime\\Crypto\\DkimSigner' => __DIR__ . '/..' . '/symfony/mime/Crypto/DkimSigner.php',
-        'Symfony\\Component\\Mime\\Crypto\\SMime' => __DIR__ . '/..' . '/symfony/mime/Crypto/SMime.php',
-        'Symfony\\Component\\Mime\\Crypto\\SMimeEncrypter' => __DIR__ . '/..' . '/symfony/mime/Crypto/SMimeEncrypter.php',
-        'Symfony\\Component\\Mime\\Crypto\\SMimeSigner' => __DIR__ . '/..' . '/symfony/mime/Crypto/SMimeSigner.php',
-        'Symfony\\Component\\Mime\\DependencyInjection\\AddMimeTypeGuesserPass' => __DIR__ . '/..' . '/symfony/mime/DependencyInjection/AddMimeTypeGuesserPass.php',
-        'Symfony\\Component\\Mime\\DraftEmail' => __DIR__ . '/..' . '/symfony/mime/DraftEmail.php',
-        'Symfony\\Component\\Mime\\Email' => __DIR__ . '/..' . '/symfony/mime/Email.php',
-        'Symfony\\Component\\Mime\\Encoder\\AddressEncoderInterface' => __DIR__ . '/..' . '/symfony/mime/Encoder/AddressEncoderInterface.php',
-        'Symfony\\Component\\Mime\\Encoder\\Base64ContentEncoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/Base64ContentEncoder.php',
-        'Symfony\\Component\\Mime\\Encoder\\Base64Encoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/Base64Encoder.php',
-        'Symfony\\Component\\Mime\\Encoder\\Base64MimeHeaderEncoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/Base64MimeHeaderEncoder.php',
-        'Symfony\\Component\\Mime\\Encoder\\ContentEncoderInterface' => __DIR__ . '/..' . '/symfony/mime/Encoder/ContentEncoderInterface.php',
-        'Symfony\\Component\\Mime\\Encoder\\EightBitContentEncoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/EightBitContentEncoder.php',
-        'Symfony\\Component\\Mime\\Encoder\\EncoderInterface' => __DIR__ . '/..' . '/symfony/mime/Encoder/EncoderInterface.php',
-        'Symfony\\Component\\Mime\\Encoder\\IdnAddressEncoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/IdnAddressEncoder.php',
-        'Symfony\\Component\\Mime\\Encoder\\MimeHeaderEncoderInterface' => __DIR__ . '/..' . '/symfony/mime/Encoder/MimeHeaderEncoderInterface.php',
-        'Symfony\\Component\\Mime\\Encoder\\QpContentEncoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/QpContentEncoder.php',
-        'Symfony\\Component\\Mime\\Encoder\\QpEncoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/QpEncoder.php',
-        'Symfony\\Component\\Mime\\Encoder\\QpMimeHeaderEncoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/QpMimeHeaderEncoder.php',
-        'Symfony\\Component\\Mime\\Encoder\\Rfc2231Encoder' => __DIR__ . '/..' . '/symfony/mime/Encoder/Rfc2231Encoder.php',
-        'Symfony\\Component\\Mime\\Exception\\AddressEncoderException' => __DIR__ . '/..' . '/symfony/mime/Exception/AddressEncoderException.php',
-        'Symfony\\Component\\Mime\\Exception\\ExceptionInterface' => __DIR__ . '/..' . '/symfony/mime/Exception/ExceptionInterface.php',
-        'Symfony\\Component\\Mime\\Exception\\InvalidArgumentException' => __DIR__ . '/..' . '/symfony/mime/Exception/InvalidArgumentException.php',
-        'Symfony\\Component\\Mime\\Exception\\LogicException' => __DIR__ . '/..' . '/symfony/mime/Exception/LogicException.php',
-        'Symfony\\Component\\Mime\\Exception\\RfcComplianceException' => __DIR__ . '/..' . '/symfony/mime/Exception/RfcComplianceException.php',
-        'Symfony\\Component\\Mime\\Exception\\RuntimeException' => __DIR__ . '/..' . '/symfony/mime/Exception/RuntimeException.php',
-        'Symfony\\Component\\Mime\\FileBinaryMimeTypeGuesser' => __DIR__ . '/..' . '/symfony/mime/FileBinaryMimeTypeGuesser.php',
-        'Symfony\\Component\\Mime\\FileinfoMimeTypeGuesser' => __DIR__ . '/..' . '/symfony/mime/FileinfoMimeTypeGuesser.php',
-        'Symfony\\Component\\Mime\\Header\\AbstractHeader' => __DIR__ . '/..' . '/symfony/mime/Header/AbstractHeader.php',
-        'Symfony\\Component\\Mime\\Header\\DateHeader' => __DIR__ . '/..' . '/symfony/mime/Header/DateHeader.php',
-        'Symfony\\Component\\Mime\\Header\\HeaderInterface' => __DIR__ . '/..' . '/symfony/mime/Header/HeaderInterface.php',
-        'Symfony\\Component\\Mime\\Header\\Headers' => __DIR__ . '/..' . '/symfony/mime/Header/Headers.php',
-        'Symfony\\Component\\Mime\\Header\\IdentificationHeader' => __DIR__ . '/..' . '/symfony/mime/Header/IdentificationHeader.php',
-        'Symfony\\Component\\Mime\\Header\\MailboxHeader' => __DIR__ . '/..' . '/symfony/mime/Header/MailboxHeader.php',
-        'Symfony\\Component\\Mime\\Header\\MailboxListHeader' => __DIR__ . '/..' . '/symfony/mime/Header/MailboxListHeader.php',
-        'Symfony\\Component\\Mime\\Header\\ParameterizedHeader' => __DIR__ . '/..' . '/symfony/mime/Header/ParameterizedHeader.php',
-        'Symfony\\Component\\Mime\\Header\\PathHeader' => __DIR__ . '/..' . '/symfony/mime/Header/PathHeader.php',
-        'Symfony\\Component\\Mime\\Header\\UnstructuredHeader' => __DIR__ . '/..' . '/symfony/mime/Header/UnstructuredHeader.php',
-        'Symfony\\Component\\Mime\\HtmlToTextConverter\\DefaultHtmlToTextConverter' => __DIR__ . '/..' . '/symfony/mime/HtmlToTextConverter/DefaultHtmlToTextConverter.php',
-        'Symfony\\Component\\Mime\\HtmlToTextConverter\\HtmlToTextConverterInterface' => __DIR__ . '/..' . '/symfony/mime/HtmlToTextConverter/HtmlToTextConverterInterface.php',
-        'Symfony\\Component\\Mime\\HtmlToTextConverter\\LeagueHtmlToMarkdownConverter' => __DIR__ . '/..' . '/symfony/mime/HtmlToTextConverter/LeagueHtmlToMarkdownConverter.php',
-        'Symfony\\Component\\Mime\\Message' => __DIR__ . '/..' . '/symfony/mime/Message.php',
-        'Symfony\\Component\\Mime\\MessageConverter' => __DIR__ . '/..' . '/symfony/mime/MessageConverter.php',
-        'Symfony\\Component\\Mime\\MimeTypeGuesserInterface' => __DIR__ . '/..' . '/symfony/mime/MimeTypeGuesserInterface.php',
-        'Symfony\\Component\\Mime\\MimeTypes' => __DIR__ . '/..' . '/symfony/mime/MimeTypes.php',
-        'Symfony\\Component\\Mime\\MimeTypesInterface' => __DIR__ . '/..' . '/symfony/mime/MimeTypesInterface.php',
-        'Symfony\\Component\\Mime\\Part\\AbstractMultipartPart' => __DIR__ . '/..' . '/symfony/mime/Part/AbstractMultipartPart.php',
-        'Symfony\\Component\\Mime\\Part\\AbstractPart' => __DIR__ . '/..' . '/symfony/mime/Part/AbstractPart.php',
-        'Symfony\\Component\\Mime\\Part\\DataPart' => __DIR__ . '/..' . '/symfony/mime/Part/DataPart.php',
-        'Symfony\\Component\\Mime\\Part\\File' => __DIR__ . '/..' . '/symfony/mime/Part/File.php',
-        'Symfony\\Component\\Mime\\Part\\MessagePart' => __DIR__ . '/..' . '/symfony/mime/Part/MessagePart.php',
-        'Symfony\\Component\\Mime\\Part\\Multipart\\AlternativePart' => __DIR__ . '/..' . '/symfony/mime/Part/Multipart/AlternativePart.php',
-        'Symfony\\Component\\Mime\\Part\\Multipart\\DigestPart' => __DIR__ . '/..' . '/symfony/mime/Part/Multipart/DigestPart.php',
-        'Symfony\\Component\\Mime\\Part\\Multipart\\FormDataPart' => __DIR__ . '/..' . '/symfony/mime/Part/Multipart/FormDataPart.php',
-        'Symfony\\Component\\Mime\\Part\\Multipart\\MixedPart' => __DIR__ . '/..' . '/symfony/mime/Part/Multipart/MixedPart.php',
-        'Symfony\\Component\\Mime\\Part\\Multipart\\RelatedPart' => __DIR__ . '/..' . '/symfony/mime/Part/Multipart/RelatedPart.php',
-        'Symfony\\Component\\Mime\\Part\\SMimePart' => __DIR__ . '/..' . '/symfony/mime/Part/SMimePart.php',
-        'Symfony\\Component\\Mime\\Part\\TextPart' => __DIR__ . '/..' . '/symfony/mime/Part/TextPart.php',
-        'Symfony\\Component\\Mime\\RawMessage' => __DIR__ . '/..' . '/symfony/mime/RawMessage.php',
-        'Symfony\\Component\\Mime\\Test\\Constraint\\EmailAddressContains' => __DIR__ . '/..' . '/symfony/mime/Test/Constraint/EmailAddressContains.php',
-        'Symfony\\Component\\Mime\\Test\\Constraint\\EmailAttachmentCount' => __DIR__ . '/..' . '/symfony/mime/Test/Constraint/EmailAttachmentCount.php',
-        'Symfony\\Component\\Mime\\Test\\Constraint\\EmailHasHeader' => __DIR__ . '/..' . '/symfony/mime/Test/Constraint/EmailHasHeader.php',
-        'Symfony\\Component\\Mime\\Test\\Constraint\\EmailHeaderSame' => __DIR__ . '/..' . '/symfony/mime/Test/Constraint/EmailHeaderSame.php',
-        'Symfony\\Component\\Mime\\Test\\Constraint\\EmailHtmlBodyContains' => __DIR__ . '/..' . '/symfony/mime/Test/Constraint/EmailHtmlBodyContains.php',
-        'Symfony\\Component\\Mime\\Test\\Constraint\\EmailSubjectContains' => __DIR__ . '/..' . '/symfony/mime/Test/Constraint/EmailSubjectContains.php',
-        'Symfony\\Component\\Mime\\Test\\Constraint\\EmailTextBodyContains' => __DIR__ . '/..' . '/symfony/mime/Test/Constraint/EmailTextBodyContains.php',
         'Symfony\\Component\\Process\\Exception\\ExceptionInterface' => __DIR__ . '/..' . '/symfony/process/Exception/ExceptionInterface.php',
         'Symfony\\Component\\Process\\Exception\\InvalidArgumentException' => __DIR__ . '/..' . '/symfony/process/Exception/InvalidArgumentException.php',
         'Symfony\\Component\\Process\\Exception\\LogicException' => __DIR__ . '/..' . '/symfony/process/Exception/LogicException.php',
@@ -7829,9 +7760,9 @@ class ComposerStaticInit99e86c04e8e93b38f1ba0319b18aaaf1
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit99e86c04e8e93b38f1ba0319b18aaaf1::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit99e86c04e8e93b38f1ba0319b18aaaf1::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit99e86c04e8e93b38f1ba0319b18aaaf1::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitb5e052931d8e569668e744be39d799f9::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitb5e052931d8e569668e744be39d799f9::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitb5e052931d8e569668e744be39d799f9::$classMap;
 
         }, null, ClassLoader::class);
     }

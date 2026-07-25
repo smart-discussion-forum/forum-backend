@@ -364,7 +364,6 @@
         .topic-summary-wrap,
         .quiz-table-wrap,
         .hero-card,
-        .page-card,
         .welcome-card {
             background: var(--glass);
             border: 1px solid var(--line);
@@ -396,9 +395,17 @@
             color: var(--text);
         }
         .page-card {
-            background: rgba(245, 247, 250, 0.92);
+            background: rgba(245, 247, 250, 0.96);
             color: var(--text);
             border-radius: 30px;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+        }
+        .page-card .page-card,
+        .page-card .table-card,
+        .page-card .part-metric,
+        .page-card .part-row {
+            box-shadow: none;
         }
         .panel {
             padding: 18px;
@@ -697,7 +704,12 @@
                <a href="<?php echo e(route('groups.index')); ?>">Groups</a>
                 <a href="/quizzes">Quiz</a>
                 <a href="<?php echo e(route('recommendations.index')); ?>">Recommended</a>
-                <a href="<?php echo e(route('groups.statistics', auth()->user()->groups()->first()?->id ?? 1)); ?>">Stats</a>
+                <?php if(auth()->user()->role === \App\Enums\RoleEnum::Admin): ?>
+                    <a href="<?php echo e(route('admin.users.index')); ?>">Manage Users</a>
+                    <a href="<?php echo e(route('admin.statistics.index')); ?>">Statistics</a>
+                <?php elseif(auth()->user()->role === \App\Enums\RoleEnum::Lecturer): ?>
+                    <a href="<?php echo e(route('groups.statistics', auth()->user()->createdGroups()->first()?->id ?? auth()->user()->groups()->first()?->id ?? 1)); ?>">Participation</a>
+                <?php endif; ?>
             </div>
             <div class="nav-right-cluster">
                 <div class="notif-bell-container">
@@ -752,12 +764,14 @@
     <?php endif; ?>
 </div>
 <?php if(auth()->guard()->check()): ?>
-    <?php if(!empty($activeBlacklistEntry)): ?>
-        <div class="blacklist-banner">
-            Your account is blacklisted: <?php echo e($activeBlacklistEntry->Reason); ?>.
-            <a href="<?php echo e(route('blacklist.status')); ?>">View details</a>
-        </div>
-    <?php endif; ?>
+    <div id="blacklistBannerContainer">
+        <?php if(!empty($activeBlacklistEntry)): ?>
+            <div class="blacklist-banner">
+                Your account is blacklisted: <?php echo e($activeBlacklistEntry->Reason); ?>.
+                <a href="<?php echo e(route('blacklist.status')); ?>">View details</a>
+            </div>
+        <?php endif; ?>
+    </div>
 <?php endif; ?>
 <script>
     document.getElementById('navHamburgerBtn')?.addEventListener('click', function(event) {
@@ -910,6 +924,35 @@
 
         setInterval(pollNotifications, pollIntervalMs);
     })();
+
+    (function() {
+        const bannerContainer = document.getElementById('blacklistBannerContainer');
+        if (!bannerContainer) return;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str ?? '';
+            return div.innerHTML;
+        }
+
+        function renderBanner(data) {
+            if (data.blacklisted) {
+                bannerContainer.innerHTML = '<div class="blacklist-banner">Your account is blacklisted: ' +
+                    escapeHtml(data.reason || 'Blacklisted by Admin.') + '. <a href="/blacklist-status">View details</a></div>';
+            } else {
+                bannerContainer.innerHTML = '';
+            }
+        }
+
+        function pollBlacklistStatus() {
+            fetch('/api/blacklist-status', { headers: { Accept: 'application/json' } })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(renderBanner)
+                .catch(() => {});
+        }
+
+        setInterval(pollBlacklistStatus, 8000);
+    })();
 </script>
 <div class="screen-box <?php echo $__env->yieldContent('box-style', 'wide'); ?>">
     <?php if(session('success')): ?>
@@ -918,10 +961,21 @@
     <?php if(session('error')): ?>
         <div class="error"><?php echo e(session('error')); ?></div>
     <?php endif; ?>
+    <?php if (! empty(trim($__env->yieldContent('header')))): ?>
+        <div style="max-width:1100px; margin:0 auto 12px; padding:0 8px;">
+            <?php echo $__env->yieldContent('header'); ?>
+        </div>
+    <?php endif; ?>
     <?php echo $__env->yieldContent('content'); ?>
-    </div>
+</div>
     <?php if(auth()->guard()->check()): ?>
-<?php if(auth()->user()->role->value === 'student'): ?>
+<?php
+    $requestPath = request()->path();
+    $skipQuizPoll = str_contains($requestPath, 'chat')
+        || str_contains($requestPath, 'topics/')
+        || str_contains($requestPath, 'discussions');
+?>
+<?php if(auth()->user()->role->value === 'student' && ! $skipQuizPoll): ?>
 <div id="quizCountdownBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#4f7ca8,#2f5f84); color:#fff; text-align:center; padding:12px; font-weight:700;">
     <span id="quizCountdownText"></span>
 </div>
