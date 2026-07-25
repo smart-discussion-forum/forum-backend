@@ -5,9 +5,21 @@
 @section('content')
 <div class="page-card" style="max-width:1100px; margin:30px auto; padding:30px;">
 
-    <h2 class="screen-title" style="color:var(--text); text-align:left; margin-bottom:4px;">
-        {{ $group_name }}
-    </h2>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:4px;">
+        <h2 class="screen-title" style="color:var(--text); text-align:left; margin:0;">
+            {{ $group_name }}
+        </h2>
+        @if($current_user->role?->value === 'Admin' || $current_user->id === $created_by_id)
+            <div style="display:flex; gap:8px;">
+                <a href="{{ route('groups.edit', $group_id) }}" class="dash-btn" style="padding:6px 14px; font-size:0.85rem;">Edit</a>
+                <form method="POST" action="{{ route('groups.destroy', $group_id) }}" onsubmit="return confirm('Delete this group? This cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="dash-btn" style="padding:6px 14px; font-size:0.85rem; color:#dc2626;">Delete</button>
+                </form>
+            </div>
+        @endif
+    </div>
     <p style="color:var(--muted); margin-bottom:24px;">
         Created by <span style="color:var(--text); font-weight:600;">{{ $created_by }}</span>
     </p>

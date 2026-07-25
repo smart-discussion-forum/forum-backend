@@ -236,8 +236,10 @@ if (! $allowedGroupIds->contains($group->id)) {
         }
 
             return view('groups.statistics', [
+            'group_id' => $selectedGroup->id,
             'group_name' => $selectedGroup->name,
             'created_by' => $selectedGroup->creator?->name,
+            'created_by_id' => $selectedGroup->created_by,
             'member_count' => $memberCount,
             'topic_count' => $topicCount,
             'post_count' => $postCount,

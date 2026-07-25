@@ -97,10 +97,24 @@ public function index()
         return redirect('/quizzes')->with('success', 'Quiz created successfully.');
     }
 
+    public function answerKey($id)
+    {
+        $quiz = Quiz::with('questions')->findOrFail($id);
+        $user = auth()->user();
+        $isOwner = auth()->id() === $quiz->Lecturer_id;
+        $isAdmin = $user->role->value === 'Admin';
+
+        if (!$isOwner && !$isAdmin) {
+            abort(403, 'Only the quiz owner or an admin can view the answer key.');
+        }
+
+        return view('quizzes.answer-key', compact('quiz'));
+    }
+
     public function show($id)
     {
         $quiz = Quiz::with('questions')->findOrFail($id);
-        $isOwner = auth()->id() === $quiz->Lecturer_id;
+        $isOwner = auth()->id() === $quiz->Lecturer_id || auth()->user()->role->value === 'Admin';
         $now = now();
 
         if ($isOwner) {
@@ -277,7 +291,7 @@ public function index()
     {
         $quiz = Quiz::with('questions')->findOrFail($id);
 
-        if (auth()->id() !== $quiz->Lecturer_id) {
+        if (auth()->id() !== $quiz->Lecturer_id && auth()->user()->role->value !== 'Admin') {
             abort(403, 'You can only view submissions for your own quiz.');
         }
 

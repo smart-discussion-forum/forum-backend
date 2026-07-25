@@ -49,7 +49,7 @@ Route::post('/groups/{id}/join', [GroupController::class, 'join'])->name('groups
 Route::post('/groups/{id}/leave', [GroupController::class, 'leave'])->name('groups.leave');
 Route::get('/groups/{id}', [GroupController::class, 'show'])->name('groups.show');
 // Topics, now scoped under a group's chat
-    Route::get('/groups/{groupId}/topics', [TopicController::class, 'groupIndex']);
+    Route::get('/groups/{groupId}/topics', [TopicController::class, 'groupIndex'])->name('groups.topics');
     Route::get('/groups/{groupId}/topics/create', [TopicController::class, 'groupCreate']);
     Route::post('/groups/{groupId}/topics', [TopicController::class, 'groupStore'])->middleware('not_blacklisted');
     Route::get('/groups/{groupId}/topics/{id}', [TopicController::class, 'groupShow']);
@@ -64,6 +64,7 @@ Route::get('/quizzes/list-check', [QuizController::class, 'listCheck']);
 Route::get('/quizzes/results/{submissionId}', [QuizController::class, 'results']);
 Route::post('/quizzes', [QuizController::class, 'store']);
 Route::get('/quizzes/{id}', [QuizController::class, 'show']);
+Route::get('/quizzes/{id}/answers', [QuizController::class, 'answerKey'])->name('quizzes.answers');
 Route::get('/quizzes/{id}/edit', [QuizController::class, 'edit']);
 Route::put('/quizzes/{id}', [QuizController::class, 'update']);
 Route::get('/quizzes/{id}/submissions', [QuizController::class, 'submissions']);
