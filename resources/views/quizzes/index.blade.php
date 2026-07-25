@@ -1,11 +1,18 @@
 @extends('layouts.app')
 @section('content')
-    <div class="page-card" style="max-width:1100px; margin:24px auto; padding:24px;">
+    <div class="page-card" style="max-width:1100px; margin:24px auto; padding:24px; position:relative;">
+        @if(auth()->user()->role->value === 'Lecturer')
+            <a href="/quizzes/create" id="createQuizFab" class="btn" style="position:absolute; top:20px; right:20px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:2;">
+                <span aria-hidden="true">+</span><span class="fab-label"> Create Quiz</span>
+            </a>
+        @endif
         <div class="screen-title" style="color:var(--text); margin-bottom:8px;">Quizzes</div>
         <p style="text-align:center; color:var(--muted); margin-top:0; margin-bottom:22px;">View scheduled quizzes, their status, and announcements.</p>
         <div class="table-card">
             <table>
-                <tr><th>Title</th><th>Group</th><th>Start</th><th>Status</th><th>Actions</th></tr>
+                <thead>
+                    <tr><th>Title</th><th>Group</th><th>Start</th><th>Status</th><th>Actions</th></tr>
+                </thead>
                 <tbody id="quizzesBody">
                 @forelse($quizzes as $quiz)
                     <tr data-quiz-id="{{ $quiz->quiz_id }}">
@@ -47,6 +54,42 @@
             @endif
         </div>
     </div>
+
+    <style>
+        @media (max-width: 640px) {
+            #createQuizFab {
+                width: 36px;
+                height: 36px;
+                padding: 0 !important;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.1rem;
+                line-height: 1;
+                top: 24px;
+                right: 24px;
+            }
+            #createQuizFab .fab-label {
+                display: none;
+            }
+            .table-card table thead th:nth-child(2),
+            .table-card table thead th:nth-child(3),
+            .table-card table thead th:nth-child(4),
+            .table-card table tbody td:nth-child(2),
+            .table-card table tbody td:nth-child(3),
+            .table-card table tbody td:nth-child(4) {
+                display: none;
+            }
+            .table-card table {
+                min-width: 0;
+            }
+            .table-card table thead th:first-child,
+            .table-card table tbody td:first-child {
+                width: 100%;
+            }
+        }
+    </style>
 
     @if(auth()->user()->role->value !== 'Admin')
     <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>

@@ -2,7 +2,7 @@
 @section('content')
     <div class="auth-card" style="max-width:480px; margin:48px auto; padding:30px;">
         <div class="screen-title" style="margin-bottom:6px; font-size:26px;">Registration</div>
-        <p style="text-align:center; color:var(--muted); margin-top:0; margin-bottom:22px;">Create your account and join a discussion group.</p>
+        <p style="text-align:center; color:var(--muted); margin-top:0; margin-bottom:22px;">Create your account</p>
         <form method="POST" action="/register">
             @csrf
             <label>Name:</label>

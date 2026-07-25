@@ -12,6 +12,49 @@
     @if (session('status'))
         <p style="color:#16a34a; margin-bottom:16px;">{{ session('status') }}</p>
     @endif
+    @if (session('error'))
+        <p style="color:#dc2626; margin-bottom:16px;">{{ session('error') }}</p>
+    @endif
+
+    @php
+        $filters = [
+            'all' => 'All',
+            'active' => 'Active',
+            'blacklisted' => 'Blacklisted',
+            'warned' => 'Warned',
+        ];
+        $currentFilter = $filter ?? 'all';
+        $currentSearch = $search ?? '';
+    @endphp
+
+    <form action="{{ route('admin.users.index') }}" method="GET" style="display:flex; gap:10px; margin-bottom:16px;">
+        <input type="hidden" name="filter" value="{{ $currentFilter }}">
+        <input
+            type="text"
+            name="search"
+            value="{{ $currentSearch }}"
+            placeholder="Search by name or email..."
+            style="flex:1; padding:8px 14px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,0.9); color:var(--text); font-size:0.9rem;"
+        >
+        <button type="submit" class="dash-btn" style="padding:8px 16px; font-size:0.85rem;">
+            Search
+        </button>
+        @if($currentSearch !== '')
+            <a href="{{ route('admin.users.index', ['filter' => $currentFilter]) }}" class="dash-btn" style="padding:8px 16px; font-size:0.85rem;">
+                Clear
+            </a>
+        @endif
+    </form>
+
+    <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+        @foreach($filters as $key => $label)
+            <a href="{{ route('admin.users.index', ['filter' => $key, 'search' => $currentSearch]) }}"
+               class="dash-btn"
+               style="padding:6px 14px; font-size:0.85rem; {{ $currentFilter === $key ? 'background:var(--accent-strong); color:#fff;' : '' }}">
+                {{ $label }}
+            </a>
+        @endforeach
+    </div>
 
     <div class="table-card">
         <table>
@@ -37,38 +80,21 @@
                             </span>
                         </td>
                         <td>{{ $user->warnings_count }}</td>
-                        <td class="quiz-actions">
-                            <form method="POST" action="{{ route('admin.users.warn', $user->id) }}" style="display:inline;"
-                                  onsubmit="return promptWarningReason(this);">
-                                @csrf
-                                <input type="hidden" name="reason" value="">
-                                <button type="submit" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;" @disabled($user->status?->value === 'Blacklisted')>
-                                    Warn
-                                </button>
-                            </form>
-
-                            @if ($user->status?->value === 'Blacklisted')
-                                <form method="POST" action="{{ route('admin.users.reinstate', $user->id) }}" style="display:inline;"
-                                      onsubmit="return confirm('Reinstate {{ $user->name }}?');">
-                                    @csrf
-                                    <button type="submit" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;">
-                                        Reinstate
-                                    </button>
-                                </form>
-                            @else
-                                <form method="POST" action="{{ route('admin.users.blacklist', $user->id) }}" style="display:inline;"
-                                      onsubmit="return confirm('Blacklist {{ $user->name }}? They will be blocked from posting, creating topics, and messaging.');">
-                                    @csrf
-                                    <button type="submit" class="dash-btn" style="padding:6px 12px; font-size:0.8rem; color:#dc2626;">
-                                        Blacklist
-                                    </button>
-                                </form>
-                            @endif
+                        <td>
+                            <a href="{{ route('admin.users.show', $user->id) }}" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;">
+                                Manage
+                            </a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" style="color:var(--muted);">No users yet.</td>
+                        <td colspan="6" style="color:var(--muted);">
+                            @if($currentSearch !== '')
+                                No users match "{{ $currentSearch }}".
+                            @else
+                                No users match this filter.
+                            @endif
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
@@ -77,14 +103,25 @@
 
 </div>
 
-<script>
-    function promptWarningReason(form) {
-        const reason = prompt('Reason for this warning:');
-        if (!reason) {
-            return false;
+<style>
+    @media (max-width: 640px) {
+        .table-card table thead th:nth-child(2),
+        .table-card table thead th:nth-child(3),
+        .table-card table thead th:nth-child(4),
+        .table-card table thead th:nth-child(5),
+        .table-card table tbody td:nth-child(2),
+        .table-card table tbody td:nth-child(3),
+        .table-card table tbody td:nth-child(4),
+        .table-card table tbody td:nth-child(5) {
+            display: none;
         }
-        form.querySelector('input[name="reason"]').value = reason;
-        return true;
+        .table-card table {
+            min-width: 0;
+        }
+        .table-card table th:first-child,
+        .table-card table td:first-child {
+            width: 100%;
+        }
     }
-</script>
+</style>
 @endsection

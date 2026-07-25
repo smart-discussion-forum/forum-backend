@@ -26,7 +26,7 @@
                     <div class="row" style="align-items: center;">
                         <div>
                             <div style="font-weight:700; font-size:16px;">
-                                <a href="{{ route('groups.show', $group->id) }}" style="color:inherit; text-decoration:none;">
+                                <a href="{{ route('groups.topics', $group->id) }}" style="color:inherit; text-decoration:none;">
                                     {{ $group->name }}
                                 </a>
                             </div>

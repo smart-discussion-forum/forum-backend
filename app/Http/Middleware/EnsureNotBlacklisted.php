@@ -15,14 +15,18 @@ class EnsureNotBlacklisted
      * then apply it to routes that create posts, messages, direct
      * messages, or topics.
      */
-    public function handle(Request $request, Closure $next): Response
+public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
         if ($user && $user->status === StatusEnum::Blacklisted) {
-            return response()->json([
-                'message' => 'Your account has been blacklisted and can no longer post or send messages.',
-            ], 403);
+            $message = 'Your account has been blacklisted and can no longer perform this action.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 403);
+            }
+
+            return redirect()->back()->with('error', $message);
         }
 
         return $next($request);

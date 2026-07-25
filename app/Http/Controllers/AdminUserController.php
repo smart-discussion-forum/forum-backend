@@ -20,15 +20,66 @@ class AdminUserController extends Controller
      * from the dashboard. Reuses the same Warning/Blacklist logic as the
      * JSON endpoints in WarningController and BlacklistController.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::withCount(['warnings' => function ($query) {
+        $filter = $request->query('filter', 'all');
+        $search = trim((string) $request->query('search', ''));
+
+        $query = User::where('role', '!=', RoleEnum::Admin)
+            ->withCount(['warnings' => function ($query) {
                 $query->manual();
             }])
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
 
-        return view('admin.users', compact('users'));
+        match ($filter) {
+            'active' => $query->where('status', StatusEnum::Active),
+            'blacklisted' => $query->where('status', StatusEnum::Blacklisted),
+            'warned' => $query->whereHas('warnings', function ($query) {
+                $query->manual();
+            }),
+            default => null,
+        };
+
+        if ($search !== '') {
+            $query->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->get();
+
+        return view('admin.users', compact('users', 'filter', 'search'));
+    }
+
+    /**
+     * Full detail page for a single user: their group involvement,
+     * activity stats, and full warning/blacklist history, plus the
+     * action forms to warn, blacklist, or reinstate them.
+     */
+    public function show(User $user)
+    {
+        abort_if($user->role === RoleEnum::Admin, 404);
+
+        $user->loadCount([
+            'createdGroups',
+            'groups',
+            'topics',
+            'posts',
+            'sentMessages',
+            'warnings' => fn ($query) => $query->manual(),
+        ]);
+
+        $createdGroups = $user->createdGroups()->withCount(['members', 'topics'])->get();
+        $joinedGroups = $user->groups()->withCount(['members', 'topics'])->get();
+
+        $warnings = $user->warnings()->orderByDesc('Issued_at')->get();
+        $blacklistEntries = $user->blacklistEntries()->orderByDesc('Blacklisted_at')->get();
+        $activeBlacklistEntry = $blacklistEntries->first(fn (Blacklist $entry) => $entry->isActive());
+
+        return view('admin.users-show', compact(
+            'user', 'createdGroups', 'joinedGroups', 'warnings', 'blacklistEntries', 'activeBlacklistEntry'
+        ));
     }
 
     /**
@@ -38,6 +89,8 @@ class AdminUserController extends Controller
      */
     public function warn(Request $request, User $user)
     {
+        abort_if($user->role === RoleEnum::Admin, 404);
+
         $data = $request->validate([
             'reason' => 'required|string|max:255',
         ]);
@@ -79,17 +132,20 @@ class AdminUserController extends Controller
      * Blacklist a user directly (Admin override, independent of the
      * warning-count threshold).
      */
-    public function blacklist(Request $request, User $user)
+        public function blacklist(Request $request, User $user)
     {
+        abort_if($user->role === RoleEnum::Admin, 404);
+
         $data = $request->validate([
             'reason' => 'nullable|string|max:255',
+            'duration_days' => 'nullable|integer|min:1|max:365',
         ]);
 
-        $blacklistDays = (int) config('moderation.blacklist_duration_days');
+        $blacklistDays = $data['duration_days'] ?? (int) config('moderation.blacklist_duration_days');
 
         $entry = Blacklist::create([
             'User_id' => $user->id,
-            'Reason' => $data['reason'] ?: 'Blacklisted by Admin.',
+            'Reason' => $data['reason'] ?? 'Blacklisted by Admin.',
             'Blacklisted_at' => now(),
             'Expires_at' => now()->addDays($blacklistDays),
         ]);
@@ -108,6 +164,7 @@ class AdminUserController extends Controller
      */
     public function reinstate(User $user)
     {
+        abort_if($user->role === RoleEnum::Admin, 404);
         Blacklist::where('User_id', $user->id)
             ->get()
             ->each(function (Blacklist $entry) {

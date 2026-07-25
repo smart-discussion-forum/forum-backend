@@ -19,10 +19,21 @@ class TopicController extends Controller
         }
 
         $topics = Topic::where('group_id', $groupId)
-            ->with('creator:id,name')
+            ->with(['creator:id,name', 'posts' => function ($query) {
+                $query->latest()->limit(1)->with('user:id,name');
+            }])
             ->withCount('posts')
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($topic) {
+                $latest = $topic->posts->first();
+            $topic->latest_post = $latest ? [
+                'content' => $latest->content,
+                'author' => $latest->user?->name,
+            ] : null;
+            unset($topic->posts); // don't send the whole posts array, just the summary
+            return $topic;
+            });
 
         return response()->json($topics);
     }
