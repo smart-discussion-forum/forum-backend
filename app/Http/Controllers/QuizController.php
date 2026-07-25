@@ -97,10 +97,24 @@ public function index()
         return redirect('/quizzes')->with('success', 'Quiz created successfully.');
     }
 
+    public function answerKey($id)
+    {
+        $quiz = Quiz::with('questions')->findOrFail($id);
+        $user = auth()->user();
+        $isOwner = auth()->id() === $quiz->Lecturer_id;
+        $isAdmin = $user->role->value === 'Admin';
+
+        if (!$isOwner && !$isAdmin) {
+            abort(403, 'Only the quiz owner or an admin can view the answer key.');
+        }
+
+        return view('quizzes.answer-key', compact('quiz'));
+    }
+
     public function show($id)
     {
         $quiz = Quiz::with('questions')->findOrFail($id);
-        $isOwner = auth()->id() === $quiz->Lecturer_id;
+        $isOwner = auth()->id() === $quiz->Lecturer_id || auth()->user()->role->value === 'Admin';
         $now = now();
 
         if ($isOwner) {
@@ -277,7 +291,7 @@ public function index()
     {
         $quiz = Quiz::with('questions')->findOrFail($id);
 
-        if (auth()->id() !== $quiz->Lecturer_id) {
+        if (auth()->id() !== $quiz->Lecturer_id && auth()->user()->role->value !== 'Admin') {
             abort(403, 'You can only view submissions for your own quiz.');
         }
 
@@ -409,6 +423,52 @@ public function upcomingCheck()
         return back()->with('success', 'Quiz announced to students.');
     }
 
+    public function apiStore(Request $request)
+{
+    $data = $request->validate([
+        'title' => 'required|string|max:150',
+        'group_id' => 'required|integer|exists:groups,id',
+        'start_time' => 'required|date',
+        'duration_minutes' => 'required|integer|min:1',
+        'questions' => 'required|array|min:1',
+        'questions.*.question' => 'required|string',
+        'questions.*.options' => 'required|array|min:2',
+        'questions.*.options.*' => 'required|string',
+        'questions.*.correct_option' => 'required|integer|min:0',
+        'questions.*.marks' => 'required|integer|min:1',
+    ]);
+
+    $isMember = auth()->user()->groups()
+    ->where('groups.id', $data['group_id'])->exists();
+
+    if (!$isMember) {
+        return response()->json(['message' => 'You can only create quizzes for groups you belong to.'], 403);
+    }
+
+    $quiz = Quiz::create([
+        'Lecturer_id' => auth()->id(),
+        'Title' => $data['title'],
+        'Target_category' => $data['group_id'],
+        'Publish_time' => $data['start_time'],
+        'Duration' => $data['duration_minutes'],
+        'announced_at' => null,
+        ]);
+
+    foreach ($data['questions'] as $questionData) {
+        QuizQuestion::create([
+            'quiz_id' => $quiz->quiz_id,
+            'Question' => $questionData['question'],
+            'Options' => json_encode(array_values($questionData['options'])),
+            'Correct_answer' => (string) $questionData['correct_option'],
+            'Marks' => (int) $questionData['marks'],
+        ]);
+    }
+        
+    return response()->json([
+        'message' => 'Quiz created successfully.',
+        'quiz' => $quiz->load('questions'),],201);
+}
+
     public function results($submissionId)
     {
         $attempt = QuizAttempt::with(['quiz.questions', 'answers.question'])->findOrFail($submissionId);
@@ -444,3 +504,4 @@ public function upcomingCheck()
         return view('quizzes.results', compact('submission', 'quiz', 'grade', 'feedback', 'breakdown'));
     }
 }
+

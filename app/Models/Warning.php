@@ -12,6 +12,10 @@ class Warning extends Model
 
     protected $primaryKey = 'Warning_id';
 
+    protected $casts = [
+        'Issued_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'User_id',
         'Reason',

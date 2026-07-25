@@ -51,4 +51,24 @@
     </div>
 
 </div>
+
+<style>
+    @media (max-width: 640px) {
+        .table-card table thead th:nth-child(2),
+        .table-card table thead th:nth-child(3),
+        .table-card table thead th:nth-child(4),
+        .table-card table tbody td:nth-child(2),
+        .table-card table tbody td:nth-child(3),
+        .table-card table tbody td:nth-child(4) {
+            display: none;
+        }
+        .table-card table {
+            min-width: 0;
+        }
+        .table-card table th:first-child,
+        .table-card table td:first-child {
+            width: 100%;
+        }
+    }
+</style>
 @endsection

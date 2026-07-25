@@ -16,7 +16,7 @@ class EnsureNotBlacklisted
      * then apply it to routes that create posts, messages, direct
      * messages, or topics.
      */
-    public function handle(Request $request, Closure $next): Response
+public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 

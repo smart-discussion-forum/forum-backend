@@ -21,7 +21,7 @@ class AdminUserController extends Controller
      * from the dashboard. Reuses the same Warning/Blacklist logic as the
      * JSON endpoints in WarningController and BlacklistController.
      */
-    public function index()
+    public function index(Request $request)
     {
         $users = User::withCount([
                 'warnings as manual_warnings_count' => function ($query) {
@@ -63,6 +63,8 @@ class AdminUserController extends Controller
      */
     public function warn(Request $request, User $user)
     {
+        abort_if($user->role === RoleEnum::Admin, 404);
+
         $data = $request->validate([
             'reason' => 'required|string|max:255',
         ]);
@@ -104,17 +106,20 @@ class AdminUserController extends Controller
      * Blacklist a user directly (Admin override, independent of the
      * warning-count threshold).
      */
-    public function blacklist(Request $request, User $user)
+        public function blacklist(Request $request, User $user)
     {
+        abort_if($user->role === RoleEnum::Admin, 404);
+
         $data = $request->validate([
             'reason' => 'nullable|string|max:255',
+            'duration_days' => 'nullable|integer|min:1|max:365',
         ]);
 
-        $blacklistDays = (int) config('moderation.blacklist_duration_days');
+        $blacklistDays = $data['duration_days'] ?? (int) config('moderation.blacklist_duration_days');
 
         $entry = Blacklist::create([
             'User_id' => $user->id,
-            'Reason' => $data['reason'] ?: 'Blacklisted by Admin.',
+            'Reason' => $data['reason'] ?? 'Blacklisted by Admin.',
             'Blacklisted_at' => now(),
             'Expires_at' => now()->addDays($blacklistDays),
         ]);
@@ -133,6 +138,7 @@ class AdminUserController extends Controller
      */
     public function reinstate(User $user)
     {
+        abort_if($user->role === RoleEnum::Admin, 404);
         Blacklist::where('User_id', $user->id)
             ->get()
             ->each(function (Blacklist $entry) {

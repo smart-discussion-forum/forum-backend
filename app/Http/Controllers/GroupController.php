@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\ParticipationMark;
 use App\Models\User;
+use App\Enums\RoleEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 class GroupController extends Controller
@@ -54,36 +55,67 @@ public function create()
         return response()->json($group);
     }
 
-    public function join($id)
-    {
-        $group = Group::findOrFail($id);
-        $user = Auth::user();
-        if ($group->members()->where('user_id', $user->id)->exists()) {
-            return response()->json([
-                'message' => 'You already belong to this group.',
-            ], 409);
-        }
-        $group->members()->attach($user->id, [
-            'role' => 'Member',
-            'joined_at' => now(),
-        ]);
+    public function browse(Request $request)
+{
+    $user = Auth::user();
 
-        return redirect()->route('groups.index')->with('success', 'Joined group successfully.');
+    $myGroups = $user->groups()->get();
+    $myGroupIds = $myGroups->pluck('id');
+
+    $joinableGroups = Group::whereNotIn('id', $myGroupIds)
+        ->withCount('members')
+        ->get();
+
+    return response()->json([
+        'myGroups' => $myGroups,
+        'joinableGroups' => $joinableGroups,
+    ]);
+}
+
+public function join(Request $request, $id)
+{
+    $group = Group::findOrFail($id);
+    $user = Auth::user();
+    if ($group->members()->where('user_id', $user->id)->exists()) {
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'You already belong to this group.'], 409);
+        }
+
+        return redirect()->route('groups.index')->with('error', 'You already belong to this group.');
+    }
+    $group->members()->attach($user->id, [
+        'role' => 'Member',
+        'joined_at' => now(),
+    ]);
+
+    if ($request->wantsJson()) {
+        return response()->json(['message' => 'Joined group successfully.'], 200);
     }
 
-    public function leave($id)
-    {
-        $group = Group::findOrFail($id);
-        $user = Auth::user();
-        if (! $group->members()->where('user_id', $user->id)->exists()) {
-            return response()->json([
-                'message' => 'You are not a member of this group.',
-            ], 409);
-        }
-        $group->members()->detach($user->id);
+    return redirect()->route('groups.index')->with('success', 'Joined group successfully.');
+}
 
-        return redirect()->route('groups.index')->with('success', 'Left group successfully.');
+public function leave(Request $request, $id)
+{
+    $group = Group::findOrFail($id);
+    $user = Auth::user();
+
+    if (! $group->members()->where('user_id', $user->id)->exists()) {
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'You are not a member of this group.'], 409);
+        }
+
+        return redirect()->route('groups.index')->with('error', 'You are not a member of this group.');
     }
+    $group->members()->detach($user->id);
+
+        if ($request->wantsJson()) {
+        return response()->json(['message' => 'Left group successfully.'], 200);
+    }
+
+
+    return redirect()->route('groups.index')->with('success', 'Left group successfully.');
+}
 
     public function statistics(Request $request, $id)
     {
@@ -107,7 +139,7 @@ public function create()
                 ->merge($currentUser->groups()->pluck('groups.id'));
         }
 
-        if (! $allowedGroupIds->contains($group->id)) {
+if (! $allowedGroupIds->contains($group->id)) {
             abort(403);
         }
 
@@ -191,27 +223,40 @@ public function create()
         return $user->last_active->gt(now()->subDays(7)) ? 'Active' : 'Inactive';
     }
 
-    public function manage()
-    {
-        $groups = Group::with('creator')
-            ->withCount(['members', 'topics'])
-            ->latest()
-            ->get();
+        public function manage()
+        {
+            $user = Auth::user();
 
-        return view('groups.manage', compact('groups'));
-    }
+            $groups = Group::with('creator')
+                ->withCount(['members', 'topics'])
+                ->when($user->role !== RoleEnum::Admin, fn ($query) => $query->where('created_by', $user->id))
+                ->latest()
+                ->get();
 
-    public function edit($id)
-    {
-        $group = Group::findOrFail($id);
-        return view('groups.edit', compact('group'));
-    }
+            return view('groups.manage', compact('groups'));
+        }
+        public function edit($id)
+        {
+            $group = Group::findOrFail($id);
+            $user = Auth::user();
 
-    public function update(Request $request, $id)
-    {
-        $group = Group::findOrFail($id);
+            if ($user->role !== RoleEnum::Admin && $group->created_by !== $user->id) {
+                abort(403, 'You can only edit groups you created.');
+            }
 
-        $validated = $request->validate([
+            return view('groups.edit', compact('group'));
+        }
+
+        public function update(Request $request, $id)
+        {
+            $group = Group::findOrFail($id);
+            $user = Auth::user();
+
+            if ($user->role !== RoleEnum::Admin && $group->created_by !== $user->id) {
+                abort(403, 'You can only edit groups you created.');
+            }
+
+            $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
         ]);
@@ -221,12 +266,18 @@ public function create()
         return redirect()->route('groups.manage')->with('success', 'Group updated successfully.');
     }
 
-    public function destroy($id)
-    {
-        $group = Group::findOrFail($id);
-        $group->delete();
+        public function destroy($id)
+        {
+            $group = Group::findOrFail($id);
+            $user = Auth::user();
 
-        return redirect()->route('groups.manage')->with('success', 'Group deleted successfully.');
-    }
+            if ($user->role !== RoleEnum::Admin && $group->created_by !== $user->id) {
+                abort(403, 'You can only delete groups you created.');
+            }
+
+            $group->delete();
+
+            return redirect()->route('groups.manage')->with('success', 'Group deleted successfully.');
+        }
 }
 
