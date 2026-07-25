@@ -157,6 +157,7 @@ class TopicController extends Controller
         ]);
 
         $post->load('user:id,name', 'topic:id,group_id');
+        auth()->user()?->touchLastActive();
         ParticipationMark::awardForUserInGroup((int) auth()->id(), (int) $groupId);
 
         try {

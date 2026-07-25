@@ -10,6 +10,7 @@ use App\Models\Warning;
 use App\Notifications\UserBlacklisted;
 use App\Notifications\WarningIssued;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 
 class AdminUserController extends Controller
@@ -22,13 +23,37 @@ class AdminUserController extends Controller
      */
     public function index()
     {
-        $users = User::withCount(['warnings' => function ($query) {
-                $query->manual();
-            }])
+        $users = User::withCount([
+                'warnings as manual_warnings_count' => function ($query) {
+                    $query->manual();
+                },
+                'warnings as auto_warnings_count' => function ($query) {
+                    $query->autoInactivity();
+                },
+            ])
             ->orderBy('name')
             ->get();
 
-        return view('admin.users', compact('users'));
+        return view('admin.users', [
+            'users' => $users,
+            'moderation' => [
+                'first_warning_days' => (int) config('moderation.inactivity_first_warning_days'),
+                'second_warning_days' => (int) config('moderation.inactivity_second_warning_days'),
+                'blacklist_after_days' => (int) config('moderation.inactivity_blacklist_after_days'),
+                'blacklist_duration_days' => (int) config('moderation.blacklist_duration_days'),
+            ],
+        ]);
+    }
+
+    /**
+     * Manually trigger the automatic inactivity check so admins can
+     * apply warnings / blacklists without waiting for the daily schedule.
+     */
+    public function runInactivityCheck()
+    {
+        Artisan::call('moderation:check-inactive-users');
+
+        return back()->with('status', trim(Artisan::output()) ?: 'Inactivity check completed.');
     }
 
     /**

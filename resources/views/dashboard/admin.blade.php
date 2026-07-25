@@ -8,28 +8,11 @@
         <span style="color:var(--text); font-weight:600;">Admin</span>.
     </p>
 
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px;">
-        <div style="margin:0; padding:18px; text-align:center; border:1px solid rgba(148,163,184,0.22); border-radius:16px; background:rgba(255,255,255,0.55);">
-            <p style="color:var(--muted); font-size:0.875rem; margin:0 0 6px;">Groups you own</p>
-            <p style="color:var(--text); font-size:1.75rem; font-weight:700; margin:0;">{{ $groupCount }}</p>
-        </div>
-        <div style="margin:0; padding:18px; text-align:center; border:1px solid rgba(148,163,184,0.22); border-radius:16px; background:rgba(255,255,255,0.55);">
-            <p style="color:var(--muted); font-size:0.875rem; margin:0 0 6px;">Posts flagged for moderation</p>
-            <p style="color:#dc2626; font-size:1.75rem; font-weight:700; margin:0;">{{ $flaggedCount }}</p>
-        </div>
-        <div style="margin:0; padding:18px; text-align:center; border:1px solid rgba(148,163,184,0.22); border-radius:16px; background:rgba(255,255,255,0.55);">
-            <p style="color:var(--muted); font-size:0.875rem; margin:0 0 6px;">Your role</p>
-            <p style="color:var(--text); font-size:1.75rem; font-weight:700; margin:0;">Admin</p>
-        </div>
-    </div>
-
     <h3 style="color:var(--text); font-weight:600; font-size:1.125rem; margin-bottom:12px;">Admin actions</h3>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px;">
         <a href="{{ route('admin.users.index') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Manage Users</a>
-        <a href="{{ route('chat') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Group Chat</a>
-        <a href="{{ route('groups.statistics', 1) }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Participation</a>
+        <a href="{{ route('admin.statistics.index') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Statistics</a>
         <a href="{{ route('groups.manage') }}" class="dash-btn" style="margin:0; text-align:center; padding:18px 16px;">Manage groups</a>
     </div>
-
 </div>
 @endsection

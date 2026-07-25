@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\AdminStatisticsController;
 
 // Public
 Route::get('/', fn() => view('welcome'));
@@ -65,7 +66,12 @@ Route::post('/quizzes/{id}/announce', [QuizController::class, 'announce']);
 
     // Admin: user management (warnings / blacklist)
     Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index')->middleware('admin');
+    Route::post('/admin/users/run-inactivity-check', [AdminUserController::class, 'runInactivityCheck'])->name('admin.users.run-inactivity-check')->middleware('admin');
     Route::post('/admin/users/{user}/warn', [AdminUserController::class, 'warn'])->name('admin.users.warn')->middleware('admin');
     Route::post('/admin/users/{user}/blacklist', [AdminUserController::class, 'blacklist'])->name('admin.users.blacklist')->middleware('admin');
     Route::post('/admin/users/{user}/reinstate', [AdminUserController::class, 'reinstate'])->name('admin.users.reinstate')->middleware('admin');
+
+    // Admin: overall group statistics (not per-student participation)
+    Route::get('/admin/statistics', [AdminStatisticsController::class, 'index'])->name('admin.statistics.index')->middleware('admin');
+    Route::get('/admin/statistics/{id}', [AdminStatisticsController::class, 'show'])->name('admin.statistics.show')->middleware('admin');
 });

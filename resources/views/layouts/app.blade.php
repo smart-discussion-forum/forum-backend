@@ -512,7 +512,10 @@
                <a href="/dashboard">Dashboard</a>
                 <a href="/quizzes">Quiz</a>
                 <a href="{{ route('recommendations.index') }}">Recommended</a>
-                @if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::Lecturer, \App\Enums\RoleEnum::Admin], true))
+                @if(auth()->user()->role === \App\Enums\RoleEnum::Admin)
+                    <a href="{{ route('admin.users.index') }}">Manage Users</a>
+                    <a href="{{ route('admin.statistics.index') }}">Statistics</a>
+                @elseif(auth()->user()->role === \App\Enums\RoleEnum::Lecturer)
                     <a href="{{ route('groups.statistics', auth()->user()->createdGroups()->first()?->id ?? auth()->user()->groups()->first()?->id ?? 1) }}">Participation</a>
                 @endif
             </div>

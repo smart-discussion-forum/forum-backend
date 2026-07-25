@@ -33,6 +33,8 @@ class MessageController extends Controller
             'sent_at' => now(),
         ]);
 
+        $user->touchLastActive();
+
         $excludedIds = collect($request->input('excluded_user_ids', []))
             ->filter(fn ($id) => (int) $id !== $user->id)
             ->unique()

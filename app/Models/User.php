@@ -56,6 +56,15 @@ class User extends Authenticatable
         return $this->hasMany(Warning::class, 'User_id');
     }
 
+    /**
+     * Mark the user as having communicated recently so the automatic
+     * inactivity warning / blacklist streak resets.
+     */
+    public function touchLastActive(): void
+    {
+        $this->forceFill(['last_active' => now()])->save();
+    }
+
     public function blacklistEntries()
     {
         return $this->hasMany(Blacklist::class, 'User_id');
