@@ -23,6 +23,10 @@ class Warning extends Model
         'Source',
     ];
 
+    protected $casts = [
+        'Issued_at' => 'datetime',
+    ];
+
     public $timestamps = false;
 
     // A warning belongs to a user

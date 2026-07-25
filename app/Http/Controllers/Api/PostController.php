@@ -66,6 +66,7 @@ class PostController extends Controller
         ]);
 
         $post->load('user:id,name', 'topic:id,group_id');
+        $user->touchLastActive();
         ParticipationMark::awardForUserInGroup((int) $user->id, (int) $topic->group_id);
 
         try {

@@ -10,6 +10,7 @@ use App\Models\Warning;
 use App\Notifications\UserBlacklisted;
 use App\Notifications\WarningIssued;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 
 class AdminUserController extends Controller
@@ -22,64 +23,37 @@ class AdminUserController extends Controller
      */
     public function index(Request $request)
     {
-        $filter = $request->query('filter', 'all');
-        $search = trim((string) $request->query('search', ''));
+        $users = User::withCount([
+                'warnings as manual_warnings_count' => function ($query) {
+                    $query->manual();
+                },
+                'warnings as auto_warnings_count' => function ($query) {
+                    $query->autoInactivity();
+                },
+            ])
+            ->orderBy('name')
+            ->get();
 
-        $query = User::where('role', '!=', RoleEnum::Admin)
-            ->withCount(['warnings' => function ($query) {
-                $query->manual();
-            }])
-            ->orderBy('name');
-
-        match ($filter) {
-            'active' => $query->where('status', StatusEnum::Active),
-            'blacklisted' => $query->where('status', StatusEnum::Blacklisted),
-            'warned' => $query->whereHas('warnings', function ($query) {
-                $query->manual();
-            }),
-            default => null,
-        };
-
-        if ($search !== '') {
-            $query->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        $users = $query->get();
-
-        return view('admin.users', compact('users', 'filter', 'search'));
+        return view('admin.users', [
+            'users' => $users,
+            'moderation' => [
+                'first_warning_days' => (int) config('moderation.inactivity_first_warning_days'),
+                'second_warning_days' => (int) config('moderation.inactivity_second_warning_days'),
+                'blacklist_after_days' => (int) config('moderation.inactivity_blacklist_after_days'),
+                'blacklist_duration_days' => (int) config('moderation.blacklist_duration_days'),
+            ],
+        ]);
     }
 
     /**
-     * Full detail page for a single user: their group involvement,
-     * activity stats, and full warning/blacklist history, plus the
-     * action forms to warn, blacklist, or reinstate them.
+     * Manually trigger the automatic inactivity check so admins can
+     * apply warnings / blacklists without waiting for the daily schedule.
      */
-    public function show(User $user)
+    public function runInactivityCheck()
     {
-        abort_if($user->role === RoleEnum::Admin, 404);
+        Artisan::call('moderation:check-inactive-users');
 
-        $user->loadCount([
-            'createdGroups',
-            'groups',
-            'topics',
-            'posts',
-            'sentMessages',
-            'warnings' => fn ($query) => $query->manual(),
-        ]);
-
-        $createdGroups = $user->createdGroups()->withCount(['members', 'topics'])->get();
-        $joinedGroups = $user->groups()->withCount(['members', 'topics'])->get();
-
-        $warnings = $user->warnings()->orderByDesc('Issued_at')->get();
-        $blacklistEntries = $user->blacklistEntries()->orderByDesc('Blacklisted_at')->get();
-        $activeBlacklistEntry = $blacklistEntries->first(fn (Blacklist $entry) => $entry->isActive());
-
-        return view('admin.users-show', compact(
-            'user', 'createdGroups', 'joinedGroups', 'warnings', 'blacklistEntries', 'activeBlacklistEntry'
-        ));
+        return back()->with('status', trim(Artisan::output()) ?: 'Inactivity check completed.');
     }
 
     /**

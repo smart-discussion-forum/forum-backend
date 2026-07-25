@@ -28,7 +28,17 @@
                         <td>{{ $group->members_count }}</td>
                         <td>{{ $group->topics_count }}</td>
                         <td class="quiz-actions">
-                            <a href="{{ route('groups.statistics', $group->id) }}" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;">Manage</a>
+                            @if(auth()->user()->role === \App\Enums\RoleEnum::Admin)
+                                <a href="{{ route('admin.statistics.show', $group->id) }}" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;">Stats</a>
+                            @else
+                                <a href="{{ route('groups.statistics', $group->id) }}" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;">Stats</a>
+                            @endif
+                            <a href="{{ route('groups.edit', $group->id) }}" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;">Edit</a>
+                            <form method="POST" action="{{ route('groups.destroy', $group->id) }}" style="display:inline;" onsubmit="return confirm('Delete this group? This cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="dash-btn" style="padding:6px 12px; font-size:0.8rem; color:#dc2626;">Delete</button>
+                            </form>
                         </td>
                     </tr>
                 @empty
