@@ -223,7 +223,7 @@ if (! $allowedGroupIds->contains($group->id)) {
         return $user->last_active->gt(now()->subDays(7)) ? 'Active' : 'Inactive';
     }
 
-        public function manage()
+        public function manage(Request $request)
         {
             $user = Auth::user();
 
@@ -232,6 +232,19 @@ if (! $allowedGroupIds->contains($group->id)) {
                 ->when($user->role !== RoleEnum::Admin, fn ($query) => $query->where('created_by', $user->id))
                 ->latest()
                 ->get();
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'groups' => $groups->map(fn ($group) => [
+                        'id' => $group->id,
+                        'name' => $group->name,
+                        'description' => $group->description,
+                        'created_by' => $group->creator?->name,
+                        'member_count' => (int) $group->members_count,
+                        'topic_count' => (int) $group->topics_count,
+                    ])->values(),
+                ]);
+            }
 
             return view('groups.manage', compact('groups'));
         }
@@ -263,10 +276,14 @@ if (! $allowedGroupIds->contains($group->id)) {
 
         $group->update($validated);
 
+        if ($request->wantsJson()) {
+            return response()->json($group->fresh());
+        }
+
         return redirect()->route('groups.manage')->with('success', 'Group updated successfully.');
     }
 
-        public function destroy($id)
+        public function destroy(Request $request, $id)
         {
             $group = Group::findOrFail($id);
             $user = Auth::user();
@@ -275,7 +292,19 @@ if (! $allowedGroupIds->contains($group->id)) {
                 abort(403, 'You can only delete groups you created.');
             }
 
-            $group->delete();
+            try {
+                $group->delete();
+            } catch (\Illuminate\Database\QueryException $e) {
+                $message = 'Could not delete this group — it still has related data that could not be removed.';
+                if ($request->wantsJson()) {
+                    return response()->json(['message' => $message], 409);
+                }
+                return redirect()->route('groups.manage')->with('error', $message);
+            }
+
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Group deleted successfully.']);
+            }
 
             return redirect()->route('groups.manage')->with('success', 'Group deleted successfully.');
         }

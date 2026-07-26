@@ -10,6 +10,8 @@ use App\Http\Controllers\BlacklistController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DirectMessageController;
 use App\Http\Controllers\RecommendationController;
+use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\AdminStatisticsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GroupController;
@@ -75,4 +77,27 @@ Route::middleware('auth:sanctum')->group(function () {
     // Posts
     Route::get('/topics/{topicId}/posts', [PostController::class, 'index']);
     Route::post('/topics/{topicId}/posts', [PostController::class, 'store'])->middleware('not_blacklisted');
+
+    // Admin: user management (warnings / blacklist) — same controller the
+    // webapp uses at /admin/users, exposed here under /api for the desktop
+    // app. AdminUserController returns JSON automatically when the request
+    // expects it (desktop sends Accept: application/json).
+    Route::middleware('admin')->group(function () {
+        Route::get('/admin/users', [AdminUserController::class, 'index']);
+        Route::post('/admin/users/run-inactivity-check', [AdminUserController::class, 'runInactivityCheck']);
+        Route::post('/admin/users/{user}/warn', [AdminUserController::class, 'warn']);
+        Route::post('/admin/users/{user}/blacklist', [AdminUserController::class, 'blacklist']);
+        Route::post('/admin/users/{user}/reinstate', [AdminUserController::class, 'reinstate']);
+
+        // Admin: overall group statistics — wired for when the desktop
+        // "Statistics" screen is hooked up to real data (see note below).
+        Route::get('/admin/statistics', [AdminStatisticsController::class, 'index']);
+        Route::get('/admin/statistics/{id}', [AdminStatisticsController::class, 'show']);
+
+        // Admin: manage groups — same data/actions as the webapp's Manage
+        // Groups page (name, creator, members, topics, edit, delete).
+        Route::get('/groups/manage', [GroupController::class, 'manage']);
+        Route::put('/groups/{id}', [GroupController::class, 'update']);
+        Route::delete('/groups/{id}', [GroupController::class, 'destroy']);
+    });
 });
