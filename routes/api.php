@@ -30,11 +30,16 @@ Route::middleware('auth:sanctum')->group(function () {
    Route::get('/groups/browse', [GroupController::class, 'browse']);
    Route::post('/groups/{id}/join', [GroupController::class, 'join']);
    Route::post('/groups/{id}/leave', [GroupController::class, 'leave']);
+
+   // Recommendations
+    Route::get('/recommendations', [RecommendationController::class, 'apiIndex']);
    
     // Groups (my groups)
     Route::get('/groups', function (Request $request) {
         return response()->json($request->user()->groups()->orderBy('name')->get());
     });
+// Fetch members for a group
+    Route::get('/groups/{id}/members', [GroupController::class, 'members']);
 
     //Quizzes
     Route::get('/quizzes', [\App\Http\Controllers\QuizController::class, 'listCheck']);
@@ -57,9 +62,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
-
-    // Recommendations
-    Route::get('/recommendations', [RecommendationController::class, 'apiIndex']);
 
     // Quiz attempts
     Route::post('/quiz/{id}/attempt', [QuizAttemptController::class, 'startAttempt']);

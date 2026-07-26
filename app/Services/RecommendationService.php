@@ -73,9 +73,10 @@ class RecommendationService
 
     public function combinedPayload(User $user): array
     {
-        return [
-            'personalized' => $this->personalizedTopicsFor($user)->values(),
-            'trending' => $this->trendingTopicsFor()->values(),
-        ];
+return [
+        'personalized' => $this->PersonalizedTopicsFor($user),
+        'trending' => $this->TrendingTopicsFor(),
+    ];
+       
     }
 }

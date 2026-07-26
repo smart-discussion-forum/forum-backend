@@ -15,8 +15,15 @@ class RecommendationController extends Controller
         return view('recommendations.index', compact('personalized', 'trending'));
     }
 
-    public function apiIndex(Request $request, RecommendationService $recommendations)
+    public function apiIndex(Request $request, RecommendationService $service)
     {
-        return response()->json($recommendations->combinedPayload($request->user()));
-    }
+       $user = $request->user();
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'Unauthenticated'
+        ], 401);
+    } 
+        return response()->json($service->combinedPayload($user));
+}
 }
