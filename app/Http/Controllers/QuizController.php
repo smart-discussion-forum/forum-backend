@@ -130,7 +130,7 @@ public function index()
             return redirect('/quizzes')->with('error', 'This quiz has not been announced yet.');
         }
 
-        if ($now->lt($quiz->start_time->copy()->subSeconds(5))) {
+        if ($now->lt($quiz->start_time)) {
             return redirect('/quizzes')->with('error', 'This quiz has not started yet.');
         }
 
@@ -504,4 +504,3 @@ public function upcomingCheck()
         return view('quizzes.results', compact('submission', 'quiz', 'grade', 'feedback', 'breakdown'));
     }
 }
-
