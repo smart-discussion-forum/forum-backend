@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Group;
 use App\Models\Post;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminStatisticsController extends Controller
@@ -12,7 +13,7 @@ class AdminStatisticsController extends Controller
      * Overview of every group with aggregate activity metrics
      * (not per-student participation marks).
      */
-    public function index(): View
+    public function index(Request $request): View|\Illuminate\Http\JsonResponse
     {
         $groups = Group::with('creator')
             ->withCount(['members', 'topics', 'messages'])
@@ -20,23 +21,31 @@ class AdminStatisticsController extends Controller
             ->get()
             ->map(fn (Group $group) => $this->buildGroupStats($group));
 
-        return view('admin.statistics.index', [
+        $payload = [
             'groups' => $groups,
-        ]);
+        ];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : view('admin.statistics.index', $payload);
     }
 
     /**
      * Detailed overall stats for a single group.
      */
-    public function show(int $id): View
+    public function show(Request $request, int $id): View|\Illuminate\Http\JsonResponse
     {
         $group = Group::with('creator')
             ->withCount(['members', 'topics', 'messages'])
             ->findOrFail($id);
 
-        return view('admin.statistics.show', [
+        $payload = [
             'stats' => $this->buildGroupStats($group),
-        ]);
+        ];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : view('admin.statistics.show', $payload);
     }
 
     /**
