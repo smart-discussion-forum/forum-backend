@@ -117,6 +117,23 @@ public function leave(Request $request, $id)
     return redirect()->route('groups.index')->with('success', 'Left group successfully.');
 }
 
+/**
+     * Get members of a specific group (used for message exclusions in desktop/mobile apps).
+     */
+    public function members($id)
+    {
+        $group = Group::findOrFail($id);
+
+        // Fetch group members
+        $members = $group->members()
+            ->select('users.id', 'users.name', 'users.email')
+            ->get();
+
+        return response()->json([
+            'members' => $members
+        ]);
+    }
+
     public function statistics(Request $request, $id)
     {
         $group = Group::with(['creator'])->findOrFail($id);
