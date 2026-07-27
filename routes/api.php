@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Moderation: warnings & blacklist
     Route::post('/warnings', [WarningController::class, 'issue']);
     Route::get('/warnings', [WarningController::class, 'index']);
+    Route::get('/blacklist-status', [BlacklistController::class, 'apiStatus']);
     Route::get('/blacklist', [BlacklistController::class, 'index']);
     Route::post('/blacklist/{blacklistId}/lift', [BlacklistController::class, 'lift']);
 

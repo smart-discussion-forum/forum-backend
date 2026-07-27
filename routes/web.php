@@ -33,15 +33,20 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/notifications', [NotificationController::class, 'page'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::get('/recommendations', [RecommendationController::class, 'index'])->name('recommendations.index');
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
-    Route::get('/notifications', [NotificationController::class, 'page'])->name('notifications.index');
+    Route::get('/blacklist/status', [BlacklistController::class, 'status'])->name('blacklist.status');
+    Route::get('/blacklist-status', [BlacklistController::class, 'status']);
+    Route::get('/blacklist/check', [BlacklistController::class, 'apiStatus'])->name('blacklist.check');
 // Groups
 Route::get('/groups/manage', [GroupController::class, 'manage'])->name('groups.manage')->middleware('lecturer');
 Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create')->middleware('lecturer');
 Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+
 Route::post('/groups', [GroupController::class, 'store'])->name('groups.store')->middleware('lecturer');
 Route::get('/groups/{id}/statistics', [GroupController::class, 'statistics'])->name('groups.statistics')->middleware('lecturer');
 Route::get('/groups/{id}/edit', [GroupController::class, 'edit'])->name('groups.edit')->middleware('lecturer');
