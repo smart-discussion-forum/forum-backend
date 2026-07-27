@@ -32,10 +32,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/profile/password', [AuthController::class, 'updatePassword']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
+    Route::get('/notifications',[NotificationController::class,'index'])->name('notifications.index');
 // Groups
 Route::get('/groups/manage', [GroupController::class, 'manage'])->name('groups.manage')->middleware('lecturer');
 Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create')->middleware('lecturer');
 Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+Route::get('/groups/{groups}/topics',[GroupController::class,'topics'])->name('groups.topics');
+
 Route::post('/groups', [GroupController::class, 'store'])->name('groups.store')->middleware('lecturer');
 Route::get('/groups/{id}/statistics', [GroupController::class, 'statistics'])->name('groups.statistics')->middleware('lecturer');
 Route::get('/groups/{id}/edit', [GroupController::class, 'edit'])->name('groups.edit')->middleware('lecturer');
