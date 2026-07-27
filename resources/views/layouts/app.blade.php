@@ -957,14 +957,17 @@
         function renderBanner(data) {
             if (data.blacklisted) {
                 bannerContainer.innerHTML = '<div class="blacklist-banner">Your account is blacklisted: ' +
-                    escapeHtml(data.reason || 'Blacklisted by Admin.') + '. <a href="/blacklist-status">View details</a></div>';
+                    escapeHtml(data.reason || 'Blacklisted by Admin.') + '. <a href="{{ url('/blacklist/status') }}">View details</a></div>';
             } else {
                 bannerContainer.innerHTML = '';
             }
         }
 
         function pollBlacklistStatus() {
-            fetch('/api/blacklist-status', { headers: { Accept: 'application/json' } })
+            fetch('{{ url('/blacklist/check') }}', {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            })
                 .then(res => res.ok ? res.json() : Promise.reject())
                 .then(renderBanner)
                 .catch(() => {});
