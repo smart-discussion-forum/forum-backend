@@ -24,7 +24,11 @@ class DatabaseSeeder extends Seeder
             MessageSeeder::class,
             MessageExclusionSeeder::class,
             ParticipationMarksSeeder::class,
-            
+            WarningSeeder::class,
+            BlacklistSeeder::class,
+            QuizSeeder::class,
+            QuizQuestionSeeder::class,
+            QuizAttemptSeeder::class,
         ]);
     }
 }
