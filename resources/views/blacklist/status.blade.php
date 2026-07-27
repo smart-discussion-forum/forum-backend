@@ -76,7 +76,10 @@
         }
 
         setInterval(function() {
-            fetch('/api/blacklist-status', { headers: { Accept: 'application/json' } })
+            fetch('{{ url('/blacklist/check') }}', {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            })
                 .then(res => res.ok ? res.json() : Promise.reject())
                 .then(render)
                 .catch(() => {});

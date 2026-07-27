@@ -703,6 +703,7 @@
                <a href="/dashboard">Dashboard</a>
                <a href="{{ route('groups.index') }}">Groups</a>
                 <a href="/quizzes">Quiz</a>
+                <a href="{{ route('notifications.index') }}">Notifications</a>
                 <a href="{{ route('recommendations.index') }}">Recommended</a>
                 @if(auth()->user()->role === \App\Enums\RoleEnum::Admin)
                     <a href="{{ route('admin.users.index') }}">Manage Users</a>
@@ -819,8 +820,9 @@
     });
 
     (function() {
-        const navNotifToken = @json(session('api_token'));
         const notifListEl = document.getElementById('notifDropdown');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+            || @json(csrf_token());
         const pollIntervalMs = 15000;
 
         function escapeHtml(str) {
@@ -856,22 +858,31 @@
             badge.textContent = count > 9 ? '9+' : count;
         }
 
+        function markRead(id) {
+            return fetch('/notifications/' + id + '/read', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            });
+        }
+
         function bindItemHandlers() {
-            notifListEl.querySelectorAll('.notif-item.unread').forEach(function(item) {
+            notifListEl?.querySelectorAll('.notif-item.unread').forEach(function(item) {
                 item.addEventListener('click', function() {
-                    fetch('/api/notifications/' + item.dataset.id + '/read', {
-                        method: 'POST',
-                        headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
-                    }).then(() => {
+                    markRead(item.dataset.id).then(() => {
                         item.classList.remove('unread');
                         updateBadge(notifListEl.querySelectorAll('.notif-item.unread').length);
-                    });
+                    }).catch(() => {});
                 });
             });
         }
 
         function renderNotifications(items) {
-            const header = notifListEl.querySelector('.notif-dropdown-header');
+            if (!notifListEl) return;
             const footer = notifListEl.querySelector('.notif-dropdown-footer');
             notifListEl.querySelectorAll('.notif-item, .notif-dropdown-empty').forEach(el => el.remove());
 
@@ -896,8 +907,11 @@
         }
 
         function pollNotifications() {
+            const token = @json(session('api_token'));
+            if (!token) return;
+
             fetch('/api/notifications', {
-                headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
+                headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
             })
                 .then(res => res.ok ? res.json() : Promise.reject())
                 .then(json => {
@@ -911,15 +925,20 @@
 
         document.getElementById('notifMarkAllRead')?.addEventListener('click', function(event) {
             event.stopPropagation();
-            fetch('/api/notifications/read-all', {
+            fetch('/notifications/read-all', {
                 method: 'POST',
-                headers: { Authorization: 'Bearer ' + navNotifToken, Accept: 'application/json' },
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
             }).then(() => {
                 notifListEl.querySelectorAll('.notif-item.unread').forEach(function(item) {
                     item.classList.remove('unread');
                 });
                 updateBadge(0);
-            });
+            }).catch(() => {});
         });
 
         setInterval(pollNotifications, pollIntervalMs);
@@ -938,14 +957,17 @@
         function renderBanner(data) {
             if (data.blacklisted) {
                 bannerContainer.innerHTML = '<div class="blacklist-banner">Your account is blacklisted: ' +
-                    escapeHtml(data.reason || 'Blacklisted by Admin.') + '. <a href="/blacklist-status">View details</a></div>';
+                    escapeHtml(data.reason || 'Blacklisted by Admin.') + '. <a href="{{ url('/blacklist/status') }}">View details</a></div>';
             } else {
                 bannerContainer.innerHTML = '';
             }
         }
 
         function pollBlacklistStatus() {
-            fetch('/api/blacklist-status', { headers: { Accept: 'application/json' } })
+            fetch('{{ url('/blacklist/check') }}', {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            })
                 .then(res => res.ok ? res.json() : Promise.reject())
                 .then(renderBanner)
                 .catch(() => {});

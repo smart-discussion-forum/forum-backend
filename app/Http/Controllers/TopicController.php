@@ -37,21 +37,14 @@ class TopicController extends Controller
 
         $group = Group::findOrFail($groupId);
 
-        $topics = Topic::with('creator')
-            ->where('group_id', $groupId)
-            ->withCount('posts')
-            ->latest()
-            ->get();
+        $latestTopic = Topic::where('group_id', $groupId)->latest('id')->first();
 
-        $topicSummaries = $topics->map(function ($topic) {
-            return [
-                'topic' => $topic,
-                'latest_post' => $topic->posts()->with('user')->latest()->first(),
-                'post_count' => $topic->posts_count,
-            ];
-        });
+        // Skip the intermediate topics list — open the discussion thread directly.
+        if ($latestTopic) {
+            return redirect('/groups/' . $groupId . '/topics/' . $latestTopic->id);
+        }
 
-        return view('topics.group-index', compact('topicSummaries', 'group'));
+        return view('topics.group-index', compact('group'));
     }
 
     public function index(Request $request, $id = null)

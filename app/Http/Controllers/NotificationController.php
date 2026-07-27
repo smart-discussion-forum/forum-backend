@@ -18,7 +18,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * List the authenticated user's notifications.
+     * List the authenticated user's notifications (API / JSON).
      * Pass ?unread_only=1 to only get unread ones.
      */
     public function index(Request $request)
@@ -37,13 +37,21 @@ class NotificationController extends Controller
         $notification = Auth::user()->notifications()->where('id', $id)->firstOrFail();
         $notification->markAsRead();
 
-        return response()->json(['success' => true]);
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back();
     }
 
     public function markAllRead(Request $request)
     {
         Auth::user()->unreadNotifications->markAsRead();
 
-        return response()->json(['success' => true]);
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('status', 'All notifications marked as read.');
     }
 }
