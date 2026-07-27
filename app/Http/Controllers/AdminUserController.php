@@ -34,7 +34,7 @@ class AdminUserController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.users', [
+        $payload = [
             'users' => $users,
             'moderation' => [
                 'first_warning_days' => (int) config('moderation.inactivity_first_warning_days'),
@@ -42,18 +42,23 @@ class AdminUserController extends Controller
                 'blacklist_after_days' => (int) config('moderation.inactivity_blacklist_after_days'),
                 'blacklist_duration_days' => (int) config('moderation.blacklist_duration_days'),
             ],
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : view('admin.users', $payload);
     }
 
     /**
      * Manually trigger the automatic inactivity check so admins can
      * apply warnings / blacklists without waiting for the daily schedule.
      */
-    public function runInactivityCheck()
+    public function runInactivityCheck(Request $request)
     {
         Artisan::call('moderation:check-inactive-users');
 
-        return back()->with('status', trim(Artisan::output()) ?: 'Inactivity check completed.');
+        $message = trim(Artisan::output()) ?: 'Inactivity check completed.';
+        return $request->expectsJson()
+            ? response()->json(['message' => $message])
+            : back()->with('status', $message);
     }
 
     /**
@@ -96,10 +101,16 @@ class AdminUserController extends Controller
 
             $user->notify(new UserBlacklisted($blacklistEntry));
 
-            return back()->with('status', "Warning issued and {$user->name} was auto-blacklisted (reached {$manualWarningLimit} warnings).");
+            $message = "Warning issued and {$user->name} was auto-blacklisted (reached {$manualWarningLimit} warnings).";
+            return $request->expectsJson()
+                ? response()->json(['message' => $message])
+                : back()->with('status', $message);
         }
 
-        return back()->with('status', "Warning issued to {$user->name}.");
+        $message = "Warning issued to {$user->name}.";
+        return $request->expectsJson()
+            ? response()->json(['message' => $message])
+            : back()->with('status', $message);
     }
 
     /**
@@ -129,14 +140,17 @@ class AdminUserController extends Controller
 
         $user->notify(new UserBlacklisted($entry));
 
-        return back()->with('status', "{$user->name} has been blacklisted.");
+        $message = "{$user->name} has been blacklisted.";
+        return $request->expectsJson()
+            ? response()->json(['message' => $message])
+            : back()->with('status', $message);
     }
 
     /**
      * Lift an active blacklist and reinstate the user, matching
      * BlacklistController@lift.
      */
-    public function reinstate(User $user)
+    public function reinstate(Request $request, User $user)
     {
         abort_if($user->role === RoleEnum::Admin, 404);
         Blacklist::where('User_id', $user->id)
@@ -149,6 +163,9 @@ class AdminUserController extends Controller
         $user->status = StatusEnum::Active;
         $user->save();
 
-        return back()->with('status', "{$user->name} has been reinstated.");
+        $message = "{$user->name} has been reinstated.";
+        return $request->expectsJson()
+            ? response()->json(['message' => $message])
+            : back()->with('status', $message);
     }
 }

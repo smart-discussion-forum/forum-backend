@@ -40,11 +40,16 @@ class MessageController extends Controller
             ->unique()
             ->values();
 
-        foreach ($excludedIds as $excludedUserId) {
-            MessageExclusion::create([
+            //Batch insert exclusions
+        if ($excludedIds->isNotEmpty()) {
+            $exclusions = $excludedIds->map(fn ($id) => [
                 'message_id' => $message->id,
-                'excluded_user_id' => $excludedUserId,
-            ]);
+                'excluded_user_id' => $id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ])->toArray();
+
+            MessageExclusion::insert($exclusions);
         }
 
         $message->load('sender');
