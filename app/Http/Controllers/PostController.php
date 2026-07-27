@@ -10,6 +10,17 @@ use Illuminate\Support\Facades\Auth;
 
 class PostController extends Controller
 {
+    // Public, unauthenticated preview page for external social sharing.
+    // Deliberately does NOT check group membership — it's meant to be
+    // safe to open by anyone with the link (social crawlers included),
+    // and only exposes a truncated excerpt via Post::shareExcerpt.
+    public function sharePreview($id)
+    {
+        $post = Post::with('user:id,name', 'topic:id,title')->findOrFail($id);
+
+        return view('posts.share', compact('post'));
+    }
+
     public function index($topicId)
     {
         $topic = Topic::findOrFail($topicId);

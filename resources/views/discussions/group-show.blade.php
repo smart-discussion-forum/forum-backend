@@ -61,6 +61,9 @@
                                 <div class="chat-time">
                                     {{ optional($post->created_at)->format('M j, Y g:i A') ?? '' }}
                                 </div>
+                                <div class="chat-actions">
+                                    <a href="{{ route('posts.share', $post->id) }}" target="_blank" rel="noopener" class="reaction-btn">Share</a>
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -125,11 +128,24 @@
                 <div class="chat-meta"></div>
                 <div class="chat-text"></div>
                 <div class="chat-time"></div>
+                <div class="chat-actions"></div>
             </div>
         `;
         row.querySelector('.chat-meta').textContent = name;
         row.querySelector('.chat-text').textContent = post.content;
         row.querySelector('.chat-time').textContent = formatTime(post.created_at);
+
+        // Real posts have a numeric id; temp (optimistic) posts don't get a
+        // working share link yet since the share page needs the saved id.
+        if (typeof post.id === 'number' || /^\d+$/.test(String(post.id))) {
+            const shareLink = document.createElement('a');
+            shareLink.href = '/posts/' + post.id + '/share';
+            shareLink.target = '_blank';
+            shareLink.rel = 'noopener';
+            shareLink.className = 'reaction-btn';
+            shareLink.textContent = 'Share';
+            row.querySelector('.chat-actions').appendChild(shareLink);
+        }
 
         thread.appendChild(row);
         thread.scrollTop = thread.scrollHeight;
