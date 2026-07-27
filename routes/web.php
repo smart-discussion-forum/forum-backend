@@ -39,7 +39,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
-    Route::get('/notifications', [NotificationController::class, 'page'])->name('notifications.index');
+    Route::get('/blacklist/status', [BlacklistController::class, 'status'])->name('blacklist.status');
+    Route::get('/blacklist-status', [BlacklistController::class, 'status']);
+    Route::get('/blacklist/check', [BlacklistController::class, 'apiStatus'])->name('blacklist.check');
 // Groups
 Route::get('/groups/manage', [GroupController::class, 'manage'])->name('groups.manage')->middleware('lecturer');
 Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create')->middleware('lecturer');
