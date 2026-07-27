@@ -25,10 +25,13 @@
         .copy { background:#5b6476; }
         .copy.copied { background:#067647; }
         .cta { display:block; margin-top:18px; text-align:center; font-size:13px; color:#4f7ca8; }
+        .back-btn { display:inline-flex; align-items:center; gap:6px; background:none; border:none; color:#5b6476; font-size:13px; font-weight:600; cursor:pointer; padding:0; margin-bottom:16px; font-family:inherit; }
+        .back-btn:hover { color:#101827; }
     </style>
 </head>
 <body>
     <div class="card">
+        <button type="button" class="back-btn" id="backBtn" style="display:none;">&larr; Back</button>
         <div class="meta">{{ $post->user->name }} · {{ $post->topic->title }}</div>
         <div class="content">{{ $post->shareExcerpt }}</div>
         <div class="share-row">
@@ -39,7 +42,8 @@
             <a class="share-btn wa" target="_blank" rel="noopener"
                href="https://wa.me/?text={{ urlencode($post->shareExcerpt.' '.$post->shareUrl) }}">
                 Share on WhatsApp
-            </a>            
+</a>
+            </a>
             <a class="share-btn li" target="_blank" rel="noopener"
                href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode($post->shareUrl) }}">
                 Share on LinkedIn
@@ -68,6 +72,19 @@
                 }, 1500);
             });
         });
+
+        // The Share link opens in a new tab, so window.history.length is
+        // always 1 here even when we did come from somewhere — history.back()
+        // has nothing to go back to *within this tab*. Use document.referrer
+        // instead and navigate there directly. If there's no referrer (page
+        // opened directly, e.g. from an external share link), keep it hidden.
+        const backBtn = document.getElementById('backBtn');
+        if (document.referrer) {
+            backBtn.style.display = 'inline-flex';
+            backBtn.addEventListener('click', function () {
+                window.location.href = document.referrer;
+            });
+        }
     </script>
 </body>
 </html>
