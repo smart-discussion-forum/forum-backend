@@ -12,10 +12,12 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminStatisticsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\BlacklistController;
+use App\Http\Controllers\PostController;
 
 // Public
 Route::get('/', fn() => view('welcome'));
 Route::get('/rules', fn() => view('rules'));
+Route::get('/posts/{id}/share', [PostController::class, 'sharePreview'])->name('posts.share');
 
 Route::get('/register', [AuthController::class, 'showRegister']);
 Route::post('/register', [AuthController::class, 'register']);
