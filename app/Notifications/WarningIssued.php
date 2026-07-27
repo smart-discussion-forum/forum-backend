@@ -21,11 +21,15 @@ class WarningIssued extends Notification
 
     public function toArray($notifiable): array
     {
+        $isAuto = $this->warning->Source === Warning::SOURCE_AUTO_INACTIVITY;
+        $label = $isAuto ? 'Inactivity warning' : 'Warning';
+
         return [
             'type' => 'warning_issued',
+            'source' => $this->warning->Source,
             'warning_id' => $this->warning->Warning_id,
             'reason' => $this->warning->Reason,
-            'message' => 'You have received a warning: ' . $this->warning->Reason,
+            'message' => "{$label}: {$this->warning->Reason}",
         ];
     }
 }

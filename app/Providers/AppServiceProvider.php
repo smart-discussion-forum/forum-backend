@@ -31,6 +31,11 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
+            // Keep a Sanctum token in session so the notification bell can poll the API.
+            if (! session('api_token')) {
+                session(['api_token' => $user->createToken('web_token')->plainTextToken]);
+            }
+
             $view->with('navUnreadNotificationsCount', $user->unreadNotifications()->count());
             $view->with('navRecentNotifications', $user->notifications()->latest()->take(6)->get());
 

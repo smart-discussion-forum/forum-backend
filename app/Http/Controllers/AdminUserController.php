@@ -62,6 +62,36 @@ class AdminUserController extends Controller
     }
 
     /**
+     * Full detail page for a single user: their group involvement,
+     * activity stats, and full warning/blacklist history, plus the
+     * action forms to warn, blacklist, or reinstate them.
+     */
+    public function show(User $user)
+    {
+        abort_if($user->role === RoleEnum::Admin, 404);
+
+        $user->loadCount([
+            'createdGroups',
+            'groups',
+            'topics',
+            'posts',
+            'sentMessages',
+            'warnings' => fn ($query) => $query->manual(),
+        ]);
+
+        $createdGroups = $user->createdGroups()->withCount(['members', 'topics'])->get();
+        $joinedGroups = $user->groups()->withCount(['members', 'topics'])->get();
+
+        $warnings = $user->warnings()->orderByDesc('Issued_at')->get();
+        $blacklistEntries = $user->blacklistEntries()->orderByDesc('Blacklisted_at')->get();
+        $activeBlacklistEntry = $blacklistEntries->first(fn (Blacklist $entry) => $entry->isActive());
+
+        return view('admin.users-show', compact(
+            'user', 'createdGroups', 'joinedGroups', 'warnings', 'blacklistEntries', 'activeBlacklistEntry'
+        ));
+    }
+
+    /**
      * Issue a manual warning to a user from the admin dashboard.
      * Mirrors WarningController@issue, including the auto-blacklist
      * escalation once the manual warning limit is reached.

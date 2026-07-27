@@ -95,7 +95,11 @@
             <tbody>
                 @forelse($users as $user)
                     <tr>
-                        <td>{{ $user->name }}</td>
+                        <td>
+                            <a href="{{ route('admin.users.show', $user->id) }}" style="color:var(--text); font-weight:600; text-decoration:none;">
+                                {{ $user->name }}
+                            </a>
+                        </td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->role->value }}</td>
                         <td style="color:var(--muted); white-space:nowrap;">
@@ -109,11 +113,12 @@
                         <td>{{ $user->manual_warnings_count }}</td>
                         <td>{{ $user->auto_warnings_count }}</td>
                         <td class="quiz-actions">
+                            <a href="{{ route('admin.users.show', $user->id) }}" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;">Manage</a>
                             <form method="POST" action="{{ route('admin.users.warn', $user->id) }}" style="display:inline;"
                                   onsubmit="return promptWarningReason(this);">
                                 @csrf
                                 <input type="hidden" name="reason" value="">
-                                <button type="submit" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;" @disabled($user->status?->value === 'Blacklisted')>
+                                <button type="submit" class="dash-btn" style="padding:6px 12px; font-size:0.8rem;" @disabled($user->status?->value === 'Blacklisted' || $user->role?->value === 'Admin')>
                                     Warn
                                 </button>
                             </form>
@@ -169,4 +174,15 @@
         }
     }
 </style>
+
+<script>
+    function promptWarningReason(form) {
+        const reason = prompt('Reason for this warning:');
+        if (!reason || !reason.trim()) {
+            return false;
+        }
+        form.querySelector('input[name="reason"]').value = reason.trim();
+        return true;
+    }
+</script>
 @endsection

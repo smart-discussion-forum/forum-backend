@@ -4,10 +4,17 @@
 
 @section('content')
 <div class="page-card" style="max-width:700px; margin:30px auto; padding:32px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
         <div class="screen-title" style="text-align:left; margin:0; font-size:24px;">Notifications</div>
-        <button type="button" id="pageMarkAllRead" class="dash-btn" style="margin:0;">Mark all read</button>
+        <form method="POST" action="{{ route('notifications.read-all') }}" style="margin:0;">
+            @csrf
+            <button type="submit" class="dash-btn" style="margin:0;">Mark all read</button>
+        </form>
     </div>
+
+    @if (session('status'))
+        <p style="color:#16a34a; margin-bottom:16px;">{{ session('status') }}</p>
+    @endif
 
     <div style="display:flex; flex-direction:column; gap:10px;">
         @forelse($notifications as $n)
@@ -18,7 +25,10 @@
                     <div style="color:var(--muted); font-size:12px; margin-top:4px;">{{ $n->created_at->diffForHumans() }}</div>
                 </div>
                 @unless($n->read_at)
-                    <span class="status-pill" style="white-space:nowrap;">Unread</span>
+                    <form method="POST" action="{{ route('notifications.read', $n->id) }}" style="margin:0;">
+                        @csrf
+                        <button type="submit" class="status-pill" style="white-space:nowrap; cursor:pointer; border:none;">Mark read</button>
+                    </form>
                 @endunless
             </div>
         @empty
@@ -31,37 +41,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-    const pageNotifToken = @json(session('api_token'));
-
-    document.querySelectorAll('.notif-page-item.unread').forEach(function(item) {
-        item.addEventListener('click', function() {
-            fetch('/api/notifications/' + item.dataset.id + '/read', {
-                method: 'POST',
-                headers: { Authorization: 'Bearer ' + pageNotifToken, Accept: 'application/json' },
-            }).then(() => {
-                item.classList.remove('unread');
-                item.style.borderLeft = 'none';
-                const pill = item.querySelector('.status-pill');
-                if (pill) pill.remove();
-            });
-        });
-    });
-
-    document.getElementById('pageMarkAllRead')?.addEventListener('click', function() {
-        fetch('/api/notifications/read-all', {
-            method: 'POST',
-            headers: { Authorization: 'Bearer ' + pageNotifToken, Accept: 'application/json' },
-        }).then(() => {
-            document.querySelectorAll('.notif-page-item.unread').forEach(function(item) {
-                item.classList.remove('unread');
-                item.style.borderLeft = 'none';
-                const pill = item.querySelector('.status-pill');
-                if (pill) pill.remove();
-            });
-        });
-    });
-</script>
-@endpush
