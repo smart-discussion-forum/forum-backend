@@ -18,5 +18,15 @@ class Post extends Model
         return $this->belongsTo(Topic::class);
     }
 
-    
+    public function getShareUrlAttribute()
+    {
+        return url('/posts/'.$this->id.'/share');
+    }
+
+    // Short, safe preview text for og:description and share text —
+    // never leak the full post content publicly, just a teaser.
+    public function getShareExcerptAttribute()
+    {
+        return \Illuminate\Support\Str::limit(strip_tags($this->content), 120);
+    }
 }

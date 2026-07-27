@@ -12,10 +12,12 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminStatisticsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\BlacklistController;
+use App\Http\Controllers\PostController;
 
 // Public
 Route::get('/', fn() => view('welcome'));
 Route::get('/rules', fn() => view('rules'));
+Route::get('/posts/{id}/share', [PostController::class, 'sharePreview'])->name('posts.share');
 
 Route::get('/register', [AuthController::class, 'showRegister']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -37,6 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     Route::get('/chat',[ChatController::class,'index'])->name ('chat');
+    Route::get('/notifications', [NotificationController::class, 'page'])->name('notifications.index');
 // Groups
 Route::get('/groups/manage', [GroupController::class, 'manage'])->name('groups.manage')->middleware('lecturer');
 Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create')->middleware('lecturer');
