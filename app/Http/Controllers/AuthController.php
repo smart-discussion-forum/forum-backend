@@ -104,6 +104,32 @@ class AuthController extends Controller
         return back()->withErrors(['email' => 'Invalid credentials.']);
     }
 
+    public function apiRegister(Request $request)
+{
+    $data = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:6',
+        'role' => 'required|in:student,Lecturer,Admin',
+        'accepted_terms' => 'required',
+    ]);
+
+    $user = User::create([
+        'name' => $data['name'],
+        'email' => $data['email'],
+        'password' => bcrypt($data['password']),
+        'role' => $data['role'],
+        'status' => \App\Enums\StatusEnum::Active,
+        'last_active' => now(),
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'token' => $user->createToken('auth_token')->plainTextToken,
+        'user' => $user,
+    ]);
+}
+
     public function apiLogin(Request $request)
     {
         $credentials = $request->validate([
