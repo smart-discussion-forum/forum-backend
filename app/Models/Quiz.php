@@ -22,6 +22,7 @@ class Quiz extends Model
     protected $casts = [
         'announced_at' => 'datetime',
         'Publish_time' => 'datetime',
+        'Target_category' => 'integer',
     ];
 
     public function getIdAttribute()
@@ -47,6 +48,7 @@ class Quiz extends Model
     public function group()
     {
         return $this->belongsTo(Group::class, 'Target_category', 'id');
+                
     }
 
     public function getStartTimeAttribute()
