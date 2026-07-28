@@ -23,19 +23,39 @@ class AdminUserController extends Controller
      */
     public function index(Request $request)
     {
-        $users = User::withCount([
+        $filter = $request->query('filter', 'all');
+        $search = trim((string) $request->query('search', ''));
+
+        $query = User::withCount([
                 'warnings as manual_warnings_count' => function ($query) {
                     $query->manual();
                 },
                 'warnings as auto_warnings_count' => function ($query) {
                     $query->autoInactivity();
                 },
-            ])
-            ->orderBy('name')
-            ->get();
+            ]);
+
+        if ($filter === 'active') {
+            $query->where('status', StatusEnum::Active);
+        } elseif ($filter === 'blacklisted') {
+            $query->where('status', StatusEnum::Blacklisted);
+        } elseif ($filter === 'warned') {
+            $query->whereHas('warnings');
+        }
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->orderBy('name')->get();
 
         $payload = [
             'users' => $users,
+            'filter' => $filter,
+            'search' => $search,
             'moderation' => [
                 'first_warning_days' => (int) config('moderation.inactivity_first_warning_days'),
                 'second_warning_days' => (int) config('moderation.inactivity_second_warning_days'),
