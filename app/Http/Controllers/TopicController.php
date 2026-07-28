@@ -54,15 +54,20 @@ class TopicController extends Controller
         $selectedTopicId = $id ?? $request->query('topic');
         $topic = null;
         $posts = collect();
+        $reactedPostIds = [];
 
         if ($selectedTopicId) {
             $topic = Topic::with('user')->find($selectedTopicId);
             if ($topic) {
-                $posts = $topic->posts()->with('user')->latest()->get();
+                $posts = $topic->posts()->with('user')->withCount('reactions')->latest()->get();
+                $reactedPostIds = \App\Models\PostReaction::where('user_id', auth()->id())
+                    ->whereIn('post_id', $posts->pluck('id'))
+                    ->pluck('post_id')
+                    ->all();
             }
         }
 
-        return view('discussions.index', compact('topics', 'topic', 'posts'));
+        return view('discussions.index', compact('topics', 'topic', 'posts', 'reactedPostIds'));
     }
 
     public function groupCreate($groupId)

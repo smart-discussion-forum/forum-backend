@@ -64,6 +64,7 @@ Route::get('/groups/{id}', [GroupController::class, 'show'])->name('groups.show'
     Route::post('/groups/{groupId}/topics/{topicId}/posts', [TopicController::class, 'groupStorePost'])->middleware('not_blacklisted');
     Route::get('/discussions', [TopicController::class, 'index'])->name('discussions.index');
     Route::get('/discussions/{id}', [TopicController::class, 'index'])->name('discussions.show');
+    Route::post('/topics/{topicId}/posts/{postId}/reaction', [PostController::class, 'react'])->name('posts.react');
     // Quiz Management
 Route::get('/quizzes', [QuizController::class, 'index'])->name('quizzes.index');
 Route::get('/quizzes/create', [QuizController::class, 'create'])->name('quizzes.create');
