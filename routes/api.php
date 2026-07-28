@@ -43,10 +43,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Quizzes
     Route::get('/quizzes', [\App\Http\Controllers\QuizController::class, 'listCheck']);
-    Route::get('/quizzes/{id}/questions', function ($id) {
-    $quiz = \App\Models\Quiz::with('questions')->findOrFail($id);
-    return response()->json($quiz->questions);
-    });
+    Route::put('/quizzes/{id}', [\App\Http\Controllers\QuizController::class, 'apiUpdate']);
+    Route::post('/quizzes/{id}/announce', [\App\Http\Controllers\QuizController::class, 'apiAnnounce']);
+    Route::get('/quizzes/{id}/questions', [\App\Http\Controllers\QuizController::class, 'apiQuestions']);
         
     // Direct messages
     Route::post('/direct-messages/send', [DirectMessageController::class, 'send'])->middleware('not_blacklisted');

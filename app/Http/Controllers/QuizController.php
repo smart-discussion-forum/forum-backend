@@ -31,6 +31,7 @@ public function index()
     }
 
     $myAttempts = QuizAttempt::where('Student_id', $user->id)
+        ->whereNotNull('submitted_at')
         ->get()
         ->keyBy('quiz_id');
 
@@ -321,16 +322,22 @@ public function index()
     }
 
     $myAttempts = QuizAttempt::where('Student_id', $user->id)
+        ->whereNotNull('submitted_at')
         ->get()
         ->keyBy('quiz_id');
 
     $payload = $quizzes->map(function ($quiz) use ($myAttempts, $user) {
         return [
             'id' => $quiz->quiz_id,
+            'group_id' => $quiz->group_id,
             'title' => $quiz->title,
             'group_name' => $quiz->group->name ?? 'Unknown group',
             'start_time' => $quiz->start_time?->toIso8601String(),
             'start_time_display' => $quiz->start_time?->format('d M H:i'),
+            'end_time' => $quiz->end_time?->toIso8601String(),
+            'end_time_display' => $quiz->end_time?->format('d M H:i'),
+            'duration_minutes' => (int) $quiz->Duration,
+            'total_marks' => (int) $quiz->questions()->sum('Marks'),
             'announced' => (bool) $quiz->announced_at,
             'announced_at_display' => $quiz->announced_at?->format('d M H:i'),
             'status' => $quiz->status,
@@ -342,6 +349,76 @@ public function index()
 
     return response()->json(['quizzes' => $payload]);
 }
+
+    public function apiUpdate(Request $request, $id)
+    {
+        $quiz = Quiz::findOrFail($id);
+
+        if ($quiz->Lecturer_id !== $request->user()->id) {
+            return response()->json(['message' => 'You can only edit your own quiz.'], 403);
+        }
+        if ($quiz->status !== 'upcoming') {
+            return response()->json(['message' => 'Only upcoming quizzes can be edited.'], 403);
+        }
+
+        $data = $request->validate([
+            'title' => 'required|string|max:150',
+            'group_id' => 'required|integer|exists:groups,id',
+            'start_time' => 'required|date',
+            'duration_minutes' => 'required|integer|min:1',
+            'questions' => 'required|array|min:1',
+            'questions.*.question' => 'required|string',
+            'questions.*.options' => 'required|array|min:2',
+            'questions.*.options.*' => 'required|string',
+            'questions.*.correct_option' => 'required|integer|min:0',
+            'questions.*.marks' => 'required|integer|min:1',
+        ]);
+
+        if (!$request->user()->groups()->where('groups.id', $data['group_id'])->exists()) {
+            return response()->json(['message' => 'You can only assign quizzes to groups you belong to.'], 403);
+        }
+
+        $quiz->update([
+            'Title' => $data['title'],
+            'Target_category' => $data['group_id'],
+            'Publish_time' => $data['start_time'],
+            'Duration' => $data['duration_minutes'],
+            'announced_at' => null,
+        ]);
+
+        $quiz->questions()->delete();
+        foreach ($data['questions'] as $questionData) {
+            QuizQuestion::create([
+                'quiz_id' => $quiz->quiz_id,
+                'Question' => $questionData['question'],
+                'Options' => json_encode(array_values($questionData['options'])),
+                'Correct_answer' => (string) $questionData['correct_option'],
+                'Marks' => (int) $questionData['marks'],
+            ]);
+        }
+
+        return response()->json(['message' => 'Quiz updated successfully.', 'quiz' => $quiz->load('questions')]);
+    }
+
+    public function apiQuestions(Request $request, $id)
+    {
+        $quiz = Quiz::with('questions')->findOrFail($id);
+        $isOwnerOrAdmin = $quiz->Lecturer_id === $request->user()->id
+            || strtolower((string) $request->user()->role->value) === 'admin';
+
+        $questions = $quiz->questions->map(function ($question) use ($isOwnerOrAdmin) {
+            $payload = [
+                'Question_id' => $question->Question_id,
+                'Question' => $question->Question,
+                'Options' => $question->Options,
+                'Marks' => $question->Marks,
+            ];
+            if ($isOwnerOrAdmin) $payload['Correct_answer'] = $question->Correct_answer;
+            return $payload;
+        });
+
+        return response()->json($questions->values());
+    }
 public function upcomingCheck()
 {
     $user = auth()->user();
@@ -423,8 +500,35 @@ public function upcomingCheck()
         return back()->with('success', 'Quiz announced to students.');
     }
 
-    public function apiStore(Request $request)
+    public function apiAnnounce(Request $request, $id)
+    {
+        $quiz = Quiz::findOrFail($id);
+        if ($quiz->Lecturer_id !== $request->user()->id) {
+            return response()->json(['message' => 'You can only announce your own quiz.'], 403);
+        }
+        if ($quiz->announced_at) {
+            return response()->json(['message' => 'Quiz is already announced.', 'quiz' => $quiz], 200);
+        }
+
+        $quiz->markAnnounced();
+        try {
+            broadcast(new \App\Events\QuizAnnounced($quiz))->toOthers();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Quiz announce broadcast failed: ' . $e->getMessage());
+        }
+        if ($quiz->group) {
+            foreach ($quiz->group->members as $member) {
+                $member->notify(new \App\Notifications\QuizPublished($quiz));
+            }
+        }
+        return response()->json(['message' => 'Quiz announced to students.', 'quiz' => $quiz], 200);
+    }
+
+public function apiStore(Request $request)
 {
+    if (strtolower((string) $request->user()->role->value) !== 'lecturer') {
+        return response()->json(['message' => 'Only lecturers can create quizzes.'], 403);
+    }
     $data = $request->validate([
         'title' => 'required|string|max:150',
         'group_id' => 'required|integer|exists:groups,id',
