@@ -18,6 +18,11 @@ class Post extends Model
         return $this->belongsTo(Topic::class);
     }
 
+    public function reactions()
+    {
+        return $this->hasMany(PostReaction::class);
+    }
+
     public function getShareUrlAttribute()
     {
         return url('/posts/'.$this->id.'/share');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\NewPostCreated;
 use App\Models\Post;
+use App\Models\PostReaction;
 use App\Models\Topic;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,5 +67,34 @@ class PostController extends Controller
             'success' => true,
             'post' => $post,
         ], 201);
+    }
+
+    // Toggle a "like" reaction on a post from the discussions thread view.
+    public function react(Request $request, $topicId, $postId)
+    {
+        $topic = Topic::findOrFail($topicId);
+        $user = Auth::user();
+
+        if (! $user->groups()->where('groups.id', $topic->group_id)->exists()) {
+            abort(403, 'You are not a member of this group.');
+        }
+
+        $post = Post::where('topic_id', $topicId)->findOrFail($postId);
+
+        $existing = PostReaction::where('user_id', $user->id)
+            ->where('post_id', $post->id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+        } else {
+            PostReaction::create([
+                'user_id' => $user->id,
+                'post_id' => $post->id,
+                'reaction_type' => 'like',
+            ]);
+        }
+
+        return redirect('/discussions/' . $topicId);
     }
 }
