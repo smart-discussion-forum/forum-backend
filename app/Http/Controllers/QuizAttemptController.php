@@ -13,12 +13,24 @@ class QuizAttemptController extends Controller
     public function startAttempt(Request $request, $quizId)
     {
         $quiz = Quiz::where('quiz_id', $quizId)->firstOrFail();
-if (now()->lt($quiz->Publish_time)) {
+        if (strtolower((string) $request->user()->role->value) !== 'student') {
+            return response()->json(['message' => 'Only students can start quiz attempts.'], 403);
+        }
+        if (!$quiz->announced_at) {
+            return response()->json(['message' => 'This quiz has not been announced yet.'], 403);
+        }
+        if (now()->lt($quiz->start_time)) {
             return response()->json(['message' => 'This quiz is not yet available.'], 403);
+        }
+        if (now()->gt($quiz->end_time)) {
+            return response()->json(['message' => 'This quiz has already closed.'], 403);
+        }
+        if (!$request->user()->groups()->where('groups.id', $quiz->group_id)->exists()) {
+            return response()->json(['message' => 'You are not in the group for this quiz.'], 403);
         }
 
         // Check if the student has already started an attempt for this quiz
-        $existingAttempt = QuizAttempt::where('Quiz_id', $quizId)
+        $existingAttempt = QuizAttempt::where('quiz_id', $quizId)
             ->where('Student_id', $request->user()->id)
             ->first();
 
@@ -28,7 +40,7 @@ if (now()->lt($quiz->Publish_time)) {
 
         // Create a new quiz attempt
         $attempt = QuizAttempt::create([
-            'Quiz_id' => $quizId,
+            'quiz_id' => $quizId,
             'Student_id' => $request->user()->id,
             'started_at' => now(),
             'Score' => 0,
@@ -39,7 +51,7 @@ if (now()->lt($quiz->Publish_time)) {
     }
     public function submitAnswer(Request $request, $attemptId)
     {
-        $attempt = QuizAttempt::where('Attempt_id', $attemptId)->firstorFail();
+    $attempt = QuizAttempt::where('Attempt_id', $attemptId)->firstorFail();
 if ($attempt->Student_id !== $request->user()->id) {
             return response()->json(['message' => 'You are not authorized to submit this attempt.'], 403);
         }
@@ -105,8 +117,15 @@ public function submitFullAttempt(Request $request, $attemptId)
     }
 
     $attempt->Score = $totalScore;
+    $attempt->Auto_submitted = $request->boolean('auto_submitted', false);
     $attempt->submitted_at = now();
     $attempt->save();
+
+    try {
+        broadcast(new \App\Events\QuizAttemptSubmitted($attempt))->toOthers();
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::warning('Quiz attempt broadcast failed: ' . $e->getMessage());
+    }
 
     return response()->json([
         'message' => 'Attempt submitted and marked.',
@@ -139,13 +158,25 @@ public function studentResults(Request $request, $attemptId)
             'question' => $question->Question ?? null,
             'submitted_answer' => $answer->submitted_answer,
             'correct_answer' => $question->Correct_answer ?? null,
+            'your_answer' => $question && isset($question->options_array[(int) $answer->submitted_answer])
+                ? $question->options_array[(int) $answer->submitted_answer] : 'No answer',
             'is_correct' => (bool) $answer->is_correct,
-            'marks_awarded' => $answer->is_correct ? $question->Marks : 0,
+            'marks_awarded' => $answer->is_correct && $question ? $question->Marks : 0,
         ];
     });
 
+    $totalMarks = (int) $attempt->quiz->questions()->sum('Marks');
+    $percentage = $totalMarks > 0 ? ($attempt->Score / $totalMarks) * 100 : 0;
+    $grade = $percentage >= 80 ? 'A' : ($percentage >= 60 ? 'B' : ($percentage >= 40 ? 'C' : 'F'));
+
     return response()->json([
         'score' => $attempt->Score,
+        'total_marks' => $totalMarks,
+        'percentage' => $percentage,
+        'grade' => $grade,
+        'feedback_message' => $percentage >= 60
+            ? 'Well done! You have a solid understanding of this topic.'
+            : 'Consider reviewing this topic further.',
         'submitted_at' => $attempt->submitted_at,
         'auto_submitted' => (bool) $attempt->Auto_submitted,
         'feedback' => $feedback,
@@ -156,13 +187,14 @@ public function lecturerResults(Request $request, $quizId)
     $quiz = Quiz::where('Quiz_id', $quizId)->firstOrFail();
 
     // Only the lecturer who owns this quiz can view all attempts
-    if ($quiz->Lecturer_id != $request->user()->id) {
+    if ($quiz->Lecturer_id != $request->user()->id
+        && strtolower((string) $request->user()->role->value) !== 'admin') {
         return response()->json([
             'message' => 'You are not authorized to view results for this quiz.'
         ], 403);
     }
 
-    $attempts = QuizAttempt::where('Quiz_id', $quizId)
+    $attempts = QuizAttempt::with('student:id,name')->where('quiz_id', $quizId)
         ->whereNotNull('submitted_at')
         ->get();
 
@@ -170,6 +202,7 @@ public function lecturerResults(Request $request, $quizId)
         return [
             'Attempt_id' => $attempt->Attempt_id,
             'Student_id' => $attempt->Student_id,
+            'student_name' => $attempt->student->name ?? 'Unknown',
             'Score' => $attempt->Score,
             'Auto_submitted' => (bool) $attempt->Auto_submitted,
             'submitted_at' => $attempt->submitted_at,
@@ -179,7 +212,10 @@ public function lecturerResults(Request $request, $quizId)
     return response()->json([
         'quiz_title' => $quiz->Title,
         'total_attempts' => $results->count(),
-        'results' => $results,
+        'results' => $results->map(function ($row) use ($quiz) {
+            $row['total_marks'] = (int) $quiz->questions()->sum('Marks');
+            return $row;
+        }),
     ], 200);
 }
 }
