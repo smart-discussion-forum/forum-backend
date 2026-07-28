@@ -318,6 +318,12 @@
             letter-spacing: 0.02em;
             color: #eff6ff;
         }
+        .page-card .screen-title,
+        .auth-card .screen-title,
+        .panel .screen-title,
+        .table-card .screen-title {
+            color: var(--text);
+        }
         input[type=text], input[type=email], input[type=password], input[type=number],
         input[type=datetime-local], textarea, select {
             width: 100%;
