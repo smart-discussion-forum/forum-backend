@@ -710,7 +710,7 @@
             <button class="nav-hamburger-btn" id="navHamburgerBtn" aria-label="Toggle menu">&#9776;</button>
             <div class="nav-links" id="navLinks">
                <a href="/dashboard">Dashboard</a>
-               <a href="{{ route('groups.index') }}">Groups</a>
+               <a href="{{ route('groups.index') }}">Browse Groups</a>
                 <a href="/quizzes">Quiz</a>
                 <a href="{{ route('notifications.index') }}">Notifications</a>
                 <a href="{{ route('recommendations.index') }}">Recommended</a>
