@@ -2,7 +2,7 @@
 @section('content')
     <div class="welcome-card" style="max-width:820px; margin:44px auto; padding:44px; border-radius:34px; text-align:center;">
         <div style="display:inline-flex; align-items:center; gap:14px; margin-bottom:18px; color:#f8fbff; font-size:15px; letter-spacing:0.16em; text-transform:uppercase;">
-            <span style="width:48px; height:48px; border-radius:16px; background:rgba(255,255,255,0.13); display:inline-flex; align-items:center; justify-content:center; font-size:20px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.35);">◌</span>
+            <img src="{{ asset('images/logo.png') }}" alt="Mindshare logo" style="width:48px; height:48px; object-fit:contain; border-radius:12px;">
             Mindshare Discussion Forum
         </div>
         <div style="height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.26), transparent); margin:0 auto 24px; max-width:620px;"></div>
