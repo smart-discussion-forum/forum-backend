@@ -19,9 +19,6 @@
                 <p style="color:var(--muted); font-size:14px;">You are not in any groups yet.</p>
                 @endforelse
             </div>
-            @if(auth()->user()->role !== \App\Enums\RoleEnum::Admin)
-            <a href="{{ route('groups.index') }}" class="dash-btn" style="display:inline-block; margin-top:10px;">Browse Groups</a>
-            @endif
         </div>
 
         <div style="flex:1;">
