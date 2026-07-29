@@ -81,6 +81,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/topics/{topicId}/posts', [PostController::class, 'index']);
     Route::post('/topics/{topicId}/posts', [PostController::class, 'store'])->middleware('not_blacklisted');
 
+    // Lecturer: student participation statistics — separate from the admin
+    // overall-group-activity screen. Lecturers see only groups they created;
+    // Admins (superset of Lecturer) see all groups. Reuses the same
+    // controller methods the webapp's /groups/manage and
+    // /groups/{id}/statistics pages already use.
+    Route::middleware('lecturer')->group(function () {
+        Route::get('/groups/managed-by-me', [GroupController::class, 'manage']);
+        Route::get('/groups/{id}/statistics', [GroupController::class, 'statistics']);
+    });
+
     // Admin: user management (warnings / blacklist) — same controller the
     // webapp uses at /admin/users, exposed here under /api for the desktop
     // app. AdminUserController returns JSON automatically when the request

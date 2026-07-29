@@ -215,7 +215,8 @@ if (! $allowedGroupIds->contains($group->id)) {
         $averageScore = $participationRows->avg('participation_score') ?? 0;
         $topScore = $participationRows->max('participation_score') ?? 0;
 
-        return view('groups.statistics', [
+        $payload = [
+            'group_id' => $group->id,
             'group_name' => $group->name,
             'created_by' => $group->creator?->name,
             'student_count' => $studentCount,
@@ -228,7 +229,13 @@ if (! $allowedGroupIds->contains($group->id)) {
             'participation_rows' => $participationRows,
             'sort_by' => $sortBy,
             'sort_order' => $sortOrder,
-        ]);
+        ];
+
+        if ($request->expectsJson()) {
+            return response()->json($payload);
+        }
+
+        return view('groups.statistics', $payload);
     }
 
     private function activityStatus(User $user): string
