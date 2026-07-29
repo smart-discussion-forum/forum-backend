@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/quizzes',[\App\Http\Controllers\QuizController::class, 'apiStore']);
    //Browse all groups (mine + joinable)
    Route::get('/groups/browse', [GroupController::class, 'browse']);
+   Route::post('/groups', [GroupController::class, 'store'])->middleware('lecturer');
    Route::post('/groups/{id}/join', [GroupController::class, 'join']);
    Route::post('/groups/{id}/leave', [GroupController::class, 'leave']);
 
